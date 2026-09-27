@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getSiteUrl } from "@/lib/site-url";
 
 const VALID_ROLES = ["admin", "accountant", "staff", "viewer"] as const;
 
@@ -35,7 +36,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Not authorized." }, { status: 403 });
   }
 
-  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? new URL(request.url).origin;
+  const origin = await getSiteUrl();
   const admin = createAdminClient();
 
   let invitedUserId: string | null = null;

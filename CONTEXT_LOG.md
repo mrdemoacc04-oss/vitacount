@@ -436,3 +436,15 @@ These tests used `tenants`/`accounts`/`journal_entries` directly (not `auth.user
 - `supabase/schema_all_migrations.sql` is stale — it predates the RLS-bypass fix and the security sweep, so bootstrapping a database from it reintroduces both issues. Left untouched rather than appending to it; apply `supabase/migrations/*` in order instead.
 - Dashboard aggregation happens in the app over paged ledger lines — fine at SMB volume; move it into a SQL function if tenants reach hundreds of thousands of lines.
 
+
+### Fix: email links never logged anyone in (2026-09-27)
+
+**Symptom:** "no one can log in." Password logins actually worked (Supabase auth logs: successful `/token` grants, all dashboard queries 200). What failed was every *email-link* flow — sign-up confirmation, password reset, and team invites. Two accounts were stuck unconfirmed and a new user (confirmed, never signed in) looped through sign-up → reset → "invalid credentials" → sign up again.
+
+**Root cause:** `signUp` / `requestPasswordReset` built their return URL from `NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"`, and the variable isn't set on Vercel — so production asked Supabase to redirect to `http://localhost:3000/auth/callback` (visible verbatim in the edge logs). Supabase rejected that and fell back to the bare Site URL (`https://vitacount-web.vercel.app/?code=…`); the proxy then bounced the logged-out visitor to `/login` and dropped the one-time code, so it was never exchanged. The Stripe Checkout success/cancel URLs had the same localhost fallback.
+
+**Fixed:** new `lib/site-url.ts` (`getSiteUrl()`) derives the origin from the request (`x-forwarded-host`/`host`) — required anyway, since the PKCE code verifier is a cookie on the domain that started the flow — used by sign-up, password reset, team invites, and Stripe return URLs. The proxy now forwards any stray `?code=` / `?token_hash=` to `/auth/callback` (recovery → `/reset-password/confirm`) instead of discarding it, and the login page explains `?error=auth_callback_failed` instead of silently showing the form.
+
+**Verified:** stray code on `/` → callback → failed exchange → login page with the explanation (browser test); a reset request now reaches Supabase with the request's own origin as `redirect_to` (edge log); `tsc` + `next build` clean. Supabase's GoTrue accepts any redirect on the Site URL's host, so production needs no allow-list change; add `http://localhost:3000/**` to Auth → URL Configuration → Redirect URLs if email links should also work in local dev.
+
+**Not done:** stuck accounts weren't modified — unconfirmed users can sign up again (Supabase re-sends confirmation) or use "Forgot password?", and anyone can reset their password now. Opening an email link in a different browser than the one that started the flow still fails (PKCE); switching the email templates to `token_hash` links (`/auth/callback?token_hash={{ .TokenHash }}&type=…`, already handled by the callback) would remove that limitation.

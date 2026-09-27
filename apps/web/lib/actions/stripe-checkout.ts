@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { getStripeClient } from "@/lib/stripe";
+import { getSiteUrl } from "@/lib/site-url";
 
 export type CreateCheckoutState = { error: string | null; url: string | null };
 
@@ -30,7 +31,7 @@ export async function createInvoiceCheckoutSessionAction(
     return { error: "This invoice has no balance due.", url: null };
   }
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const siteUrl = await getSiteUrl();
 
   const stripe = getStripeClient();
   const session = await stripe.checkout.sessions.create({

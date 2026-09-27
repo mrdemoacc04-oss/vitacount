@@ -11,6 +11,26 @@ function isPublicPath(pathname: string) {
 }
 
 export async function updateSession(request: NextRequest) {
+  // When an email link's redirect isn't accepted, Supabase sends the user to the bare
+  // Site URL instead (…/?code=…). Hand that one-time code to the callback so it's
+  // exchanged for a session, rather than dropping it on the login redirect below.
+  const { searchParams } = request.nextUrl;
+  if (request.nextUrl.pathname !== "/auth/callback" && (searchParams.has("code") || searchParams.has("token_hash"))) {
+    const callback = new URL("/auth/callback", request.url);
+    for (const key of ["code", "token_hash", "type"]) {
+      const value = searchParams.get(key);
+      if (value) callback.searchParams.set(key, value);
+    }
+    const next =
+      searchParams.get("type") === "recovery"
+        ? "/reset-password/confirm"
+        : request.nextUrl.pathname === "/"
+          ? "/dashboard"
+          : request.nextUrl.pathname;
+    callback.searchParams.set("next", next);
+    return NextResponse.redirect(callback);
+  }
+
   let response = NextResponse.next({ request });
 
   const supabase = createServerClient<Database>(

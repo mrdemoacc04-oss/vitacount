@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { Suspense, useActionState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { signIn, type AuthActionState } from "@/lib/actions/auth";
+import { AuthLinkError } from "@/components/auth-link-error";
 
 const initialState: AuthActionState = { error: null };
 
@@ -19,6 +20,10 @@ export default function LoginPage() {
         <CardTitle>Log in to VitaCount</CardTitle>
       </CardHeader>
       <CardContent>
+        {/* useSearchParams needs a Suspense boundary on this static page */}
+        <Suspense fallback={null}>
+          <AuthLinkError />
+        </Suspense>
         <form action={formAction} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <Label htmlFor="email">Email</Label>
