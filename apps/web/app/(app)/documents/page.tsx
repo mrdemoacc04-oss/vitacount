@@ -38,9 +38,9 @@ export default async function DocumentsPage() {
       {/* Header */}
       <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-bold text-foreground">Document & Receipt Capture (OCR)</h1>
-          <p className="text-xs text-muted-foreground">
-            Upload receipts, invoices, and expense documents. AP Bookkeeping Agent extracts key fields for human verification.
+          <h1 className="font-heading text-2xl font-semibold tracking-tight text-foreground">Documents</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Upload receipts and supplier invoices. Key fields are read for you to check before anything posts.
           </p>
         </div>
       </div>

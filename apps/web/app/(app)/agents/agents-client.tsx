@@ -70,9 +70,9 @@ export function AgentsClient({ initialLogs, tenantSettings }: AgentsClientProps)
       {/* Header & Kill-Switch */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-bold text-foreground">Agent Control Plane & Audit Log</h1>
-          <p className="text-xs text-muted-foreground">
-            Centralized policy governance, L0/L1/L2 autonomy toggles, emergency kill-switch, and complete agent action audit trail.
+          <h1 className="font-heading text-2xl font-semibold tracking-tight text-foreground">Agents</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Decide how much each agent may do on its own, pause them all at once, and review every action they take.
           </p>
         </div>
 

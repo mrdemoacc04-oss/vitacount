@@ -1,7 +1,14 @@
-const MIGRATION = "supabase/migrations/20260926063242_sales_purchase_documents_terms_and_payments.sql";
+const MIGRATION = "supabase/migrations/20261008120000_workspace_profile_projects_inventory.sql";
 
-// PostgREST can't find a function/column (schema cache), or Postgres itself can't.
-const MISSING_SCHEMA_CODES = new Set(["PGRST202", "PGRST204", "42703", "42883"]);
+// PostgREST can't find a table/function/column (schema cache), or Postgres itself can't.
+const MISSING_SCHEMA_CODES = new Set(["PGRST202", "PGRST204", "PGRST205", "42P01", "42703", "42883"]);
+
+/** True when a query failed only because the latest migration isn't applied yet. */
+export function isMissingSchema(error: { code?: string } | null | undefined): boolean {
+  return !!error?.code && MISSING_SCHEMA_CODES.has(error.code);
+}
+
+export const LATEST_MIGRATION = MIGRATION;
 
 /**
  * Turns a Supabase/Postgres error into a sentence for the form. The posting

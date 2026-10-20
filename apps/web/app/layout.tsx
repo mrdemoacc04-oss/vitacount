@@ -1,11 +1,27 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono, IBM_Plex_Sans } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Geist_Mono, Instrument_Serif, Inter, Inter_Tight } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Type system borrowed from folk.app: Inter for UI text (with its optical-size axis,
+// so large figures get the display cut), a tighter grotesque for headings, an italic
+// serif for the occasional editorial accent, and Geist Mono for codes and IDs.
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
+  axes: ["opsz"],
+});
+
+const interTight = Inter_Tight({
+  variable: "--font-inter-tight",
+  subsets: ["latin"],
+});
+
+const instrumentSerif = Instrument_Serif({
+  variable: "--font-instrument-serif",
+  subsets: ["latin"],
+  weight: "400",
+  style: ["normal", "italic"],
 });
 
 const geistMono = Geist_Mono({
@@ -13,15 +29,16 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-const ibmPlexSans = IBM_Plex_Sans({
-  variable: "--font-ibm-plex-sans",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
 export const metadata: Metadata = {
-  title: "VitaCount",
+  title: { default: "VitaCount", template: "%s · VitaCount" },
   description: "The financial operating system for US small businesses.",
+};
+
+export const viewport: Viewport = {
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f6f7fb" },
+    { media: "(prefers-color-scheme: dark)", color: "#0c111d" },
+  ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -29,7 +46,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${ibmPlexSans.variable} h-full antialiased`}
+      className={`${inter.variable} ${interTight.variable} ${instrumentSerif.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
         <ThemeProvider

@@ -1,53 +1,17 @@
-"use client";
+import type { Metadata } from "next";
+import { AuthHeading, AuthShell } from "@/components/auth/auth-shell";
+import { NewPasswordForm } from "@/components/auth/new-password-form";
 
-import { useActionState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { updatePassword, type AuthActionState } from "@/lib/actions/auth";
-
-const initialState: AuthActionState = { error: null };
+export const metadata: Metadata = { title: "Set your password" };
 
 export default function SetPasswordPage() {
-  const [state, formAction, pending] = useActionState(updatePassword, initialState);
-
   return (
-    <div className="flex flex-1 items-center justify-center bg-muted/40 px-4 py-16">
-      <div className="w-full max-w-sm">
-        <Card className="shadow-soft">
-          <CardHeader>
-            <CardTitle>Welcome — set your password</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="mb-4 text-sm text-muted-foreground">
-              You&apos;ve joined the workspace. Set a password so you can log
-              back in later.
-            </p>
-            <form action={formAction} className="flex flex-col gap-4">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  minLength={8}
-                  autoComplete="new-password"
-                />
-              </div>
-              {state.error ? (
-                <p className="text-sm text-destructive" role="alert">
-                  {state.error}
-                </p>
-              ) : null}
-              <Button type="submit" disabled={pending} className="w-full">
-                {pending ? "Saving…" : "Continue"}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
+    <AuthShell>
+      <AuthHeading
+        title="You're in. Set a password"
+        description="You've joined the workspace. Choose a password so you can log back in any time."
+      />
+      <NewPasswordForm submitLabel="Continue to VitaCount" />
+    </AuthShell>
   );
 }

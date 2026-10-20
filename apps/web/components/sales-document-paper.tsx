@@ -20,17 +20,43 @@ export interface PrintableSalesDocument {
   refundSource?: string | null;
 }
 
+/** The seller's details printed in the header and footer. Everything but the name is optional. */
+export interface PrintableBusiness {
+  legalName?: string | null;
+  addressLines?: string[];
+  email?: string | null;
+  phone?: string | null;
+  website?: string | null;
+  taxId?: string | null;
+  invoiceNotes?: string | null;
+  invoiceFooter?: string | null;
+}
+
 /**
  * The customer-facing document — used for the on-screen preview and for printing /
  * "Save as PDF". Deliberately theme-independent (it's paper): fixed ink on white in
  * both light and dark mode.
  */
-export function SalesDocumentPaper({ doc, businessName }: { doc: PrintableSalesDocument; businessName: string }) {
+export function SalesDocumentPaper({
+  doc,
+  businessName,
+  business,
+}: {
+  doc: PrintableSalesDocument;
+  businessName: string;
+  business?: PrintableBusiness | null;
+}) {
   const config = SALES_DOCUMENTS[doc.documentType];
   const terms = termsLabel(doc.issueDate, doc.dueDate);
   const showTax = doc.lines.some((l) => l.taxRate > 0) || doc.taxTotal > 0;
   const isReceipt = config.settlesImmediately;
   const amountPaid = doc.balanceDue != null ? doc.total - doc.balanceDue : null;
+  const sellerName = business?.legalName?.trim() || businessName;
+  const contactLine = [business?.email, business?.phone].filter((v): v is string => Boolean(v?.trim())).join(" · ");
+  const website = business?.website?.replace(/^https?:\/\//i, "");
+  const taxId = business?.taxId?.trim();
+  const notes = business?.invoiceNotes?.trim();
+  const footer = business?.invoiceFooter?.trim();
 
   return (
     <article className="mx-auto w-full max-w-[210mm] bg-white p-8 text-[13px] leading-relaxed text-zinc-900 sm:p-10">
@@ -41,8 +67,18 @@ export function SalesDocumentPaper({ doc, businessName }: { doc: PrintableSalesD
       )}
 
       <header className="flex flex-wrap items-start justify-between gap-6">
-        <div>
-          <p className="text-lg font-semibold tracking-tight">{businessName}</p>
+        <div className="min-w-0 max-w-[60%]">
+          <p className="text-lg font-semibold tracking-tight">{sellerName}</p>
+          {business && (
+            <div className="mt-1 text-[12px] leading-snug text-zinc-600">
+              {business.addressLines?.map((line) => (
+                <p key={line}>{line}</p>
+              ))}
+              {contactLine && <p className="mt-1">{contactLine}</p>}
+              {website && <p>{website}</p>}
+              {taxId && <p className="mt-1 tabular-nums">{/^\d{2}-\d{7}$/.test(taxId) ? "EIN" : "Tax ID"} {taxId}</p>}
+            </div>
+          )}
         </div>
         <div className="text-right">
           <h1 className="text-2xl font-semibold uppercase tracking-[0.12em] text-zinc-900">{config.title}</h1>
@@ -148,6 +184,18 @@ export function SalesDocumentPaper({ doc, businessName }: { doc: PrintableSalesD
 
       {doc.refundSource === "credit" && (
         <p className="mt-8 text-[11px] text-zinc-500">This refund pays back credit left on the account from an earlier overpayment.</p>
+      )}
+
+      {notes && (
+        <section className="mt-10 break-inside-avoid">
+          <p className="text-[10.5px] font-semibold uppercase tracking-wider text-zinc-500">Notes</p>
+          <p className="mt-1 whitespace-pre-line break-words text-zinc-700">{notes}</p>
+        </section>
+      )}
+      {footer && (
+        <footer className={`${notes ? "mt-6" : "mt-10"} break-inside-avoid whitespace-pre-line break-words border-t border-zinc-200 pt-4 text-center text-[11px] text-zinc-500`}>
+          {footer}
+        </footer>
       )}
     </article>
   );

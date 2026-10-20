@@ -1,13 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { Icons } from "@/components/icons";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field, FormActions, Select, SubmitButton, secondaryButtonClass } from "@/components/ui/field";
+import { CancelButton } from "@/components/forms/cancel-button";
+import { MoneyInput } from "@/components/forms/money-input";
+import { useActionForm, useUnsavedChangesWarning, type FieldErrors } from "@/components/forms/use-action-form";
 import { applyCustomerCreditAction, receivePaymentAction, type ReceivePaymentState } from "@/lib/actions/invoices";
-import { formatDate, todayISO } from "@/lib/dates";
+import { formatDate, isISODate, todayISO } from "@/lib/dates";
 import { PAYMENT_METHODS } from "@/lib/documents";
 import { formatMoney, normalizeAmount, toScaled } from "@/lib/money";
 
@@ -25,7 +28,6 @@ export type OpenReceivable = {
 export type PayingCustomer = { id: string; name: string; openBalance: number; credit: number };
 
 const initialState: ReceivePaymentState = { error: null };
-const selectClass = "h-9 w-full rounded-lg border border-border bg-background px-3 text-sm";
 
 const cents = (text: string) => toScaled(text, 2) ?? BigInt(0);
 const centsToText = (value: bigint) => (Number(value) / 100).toFixed(2);
@@ -58,7 +60,6 @@ export function ReceivePaymentForm({
   focusInvoiceId?: string;
 }) {
   const router = useRouter();
-  const [state, formAction, pending] = useActionState(receivePaymentAction.bind(null, tenantId), initialState);
   const [crediting, startCrediting] = useTransition();
   const [creditMessage, setCreditMessage] = useState<string | null>(null);
 
@@ -150,65 +151,81 @@ export function ReceivePaymentForm({
         : leftoverCents < BigInt(0)
           ? `You've applied ${formatMoney(Number(-leftoverCents) / 100)} more than the amount received.`
           : null;
-  // Empty required fields (customer, amount, method) are left to the browser's own
-  // validation so it points at the field; only problems it can't see disable the button.
-  const canSubmit = problem === null && !pending;
+
+  function validate(): FieldErrors {
+    const found: FieldErrors = {};
+    if (!contactId) found.contactId = "Choose the customer who paid.";
+    if (!isISODate(paymentDate)) found.paymentDate = "Pick the payment date.";
+    if (receivedCents <= BigInt(0)) found.amount = "Enter the amount received.";
+    if (!method) found.method = "Choose how the customer paid.";
+    return found;
+  }
+
+  const { state, pending, errors, dirty, formProps } = useActionForm(receivePaymentAction.bind(null, tenantId), initialState, validate);
+  useUnsavedChangesWarning(dirty && !pending);
 
   return (
-    <form action={formAction} className="flex flex-col gap-5">
+    <form {...formProps} className="flex flex-col gap-6">
       <input type="hidden" name="applications" value={applicationsJson} />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-        <div className="flex flex-col gap-2 sm:col-span-2">
-          <Label htmlFor="contactId">Customer</Label>
-          <select id="contactId" name="contactId" required value={contactId} onChange={(e) => selectCustomer(e.target.value)} className={selectClass}>
-            <option value="">Who paid you?</option>
-            {customers.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-                {c.openBalance > 0 ? ` — ${formatMoney(c.openBalance)} open` : ""}
-              </option>
-            ))}
-          </select>
+      <section className="rounded-xl border border-border bg-card p-5 shadow-soft-sm md:p-6" aria-label="Payment details">
+        <div className="grid grid-cols-1 gap-x-4 gap-y-5 md:grid-cols-6">
+          <Field label="Customer" htmlFor="contactId" required error={errors.contactId} className="md:col-span-3">
+            <Select
+              id="contactId"
+              name="contactId"
+              value={contactId}
+              onChange={(e) => selectCustomer(e.target.value)}
+              aria-invalid={errors.contactId ? true : undefined}
+              autoFocus={!contactId}
+            >
+              <option value="">Who paid you?</option>
+              {customers.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                  {c.openBalance > 0 ? ` — ${formatMoney(c.openBalance)} open` : ""}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Amount received" htmlFor="amount" required error={errors.amount} className="md:col-span-3">
+            <MoneyInput
+              id="amount"
+              name="amount"
+              value={amount}
+              onValueChange={(value) => {
+                setAmount(value);
+                setAmountTouched(value !== "");
+              }}
+              invalid={!!errors.amount}
+            />
+          </Field>
+          <Field label="Payment date" htmlFor="paymentDate" required error={errors.paymentDate} className="md:col-span-2">
+            <Input
+              id="paymentDate"
+              name="paymentDate"
+              type="date"
+              value={paymentDate}
+              onChange={(e) => setPaymentDate(e.target.value)}
+              aria-invalid={errors.paymentDate ? true : undefined}
+              className="h-9"
+            />
+          </Field>
+          <Field label="Payment method" htmlFor="method" required error={errors.method} className="md:col-span-2">
+            <Select id="method" name="method" value={method} onChange={(e) => setMethod(e.target.value)} aria-invalid={errors.method ? true : undefined}>
+              <option value="">Choose a method</option>
+              {PAYMENT_METHODS.map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.label}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Reference" htmlFor="reference" optional hint="Check number or transfer ID." className="md:col-span-2">
+            <Input id="reference" name="reference" placeholder="e.g. 10442" value={reference} onChange={(e) => setReference(e.target.value)} className="h-9" />
+          </Field>
         </div>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="paymentDate">Payment date</Label>
-          <Input id="paymentDate" name="paymentDate" type="date" required value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} />
-        </div>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="amount">Amount received</Label>
-          <Input
-            id="amount"
-            name="amount"
-            type="number"
-            min="0.01"
-            step="0.01"
-            inputMode="decimal"
-            required
-            placeholder="0.00"
-            value={amount}
-            onChange={(e) => {
-              setAmount(e.target.value);
-              setAmountTouched(e.target.value !== "");
-            }}
-          />
-        </div>
-        <div className="flex flex-col gap-2 sm:col-span-2">
-          <Label htmlFor="method">Payment method</Label>
-          <select id="method" name="method" required value={method} onChange={(e) => setMethod(e.target.value)} className={selectClass}>
-            <option value="">Choose…</option>
-            {PAYMENT_METHODS.map((m) => (
-              <option key={m.value} value={m.value}>
-                {m.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="flex flex-col gap-2 sm:col-span-2">
-          <Label htmlFor="reference">Reference (optional)</Label>
-          <Input id="reference" name="reference" placeholder="Check #, transfer ID…" value={reference} onChange={(e) => setReference(e.target.value)} />
-        </div>
-      </div>
+      </section>
 
       {customer && customer.credit > 0 && (
         <div className="flex flex-wrap items-center gap-3 rounded-xl bg-chart-2/10 px-4 py-3 text-sm">
@@ -217,9 +234,9 @@ export function ReceivePaymentForm({
             credit from earlier payments.
           </p>
           {invoices.length > 0 ? (
-            <Button type="button" variant="outline" className="rounded-full" disabled={crediting} onClick={applyCredit}>
+            <button type="button" className={`${secondaryButtonClass} cursor-pointer disabled:opacity-60`} disabled={crediting} onClick={applyCredit}>
               {crediting ? "Applying…" : "Apply credit to open invoices"}
-            </Button>
+            </button>
           ) : (
             <Link href={`/sales/new?type=refund_receipt&source=credit&customer=${customer.id}`} className="text-sm font-medium text-primary hover:underline">
               Refund it instead →
@@ -230,7 +247,7 @@ export function ReceivePaymentForm({
       )}
 
       {contactId && (
-        <div className="rounded-xl border border-border/70">
+        <div className="rounded-xl border border-border bg-card shadow-soft-sm">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/70 px-4 py-2.5">
             <p className="text-sm font-medium text-foreground">Open invoices</p>
             {invoices.length > 0 && (
@@ -305,17 +322,11 @@ export function ReceivePaymentForm({
                         </td>
                         <td className="py-2 pr-4 text-right tabular-nums">{formatMoney(inv.balanceDue)}</td>
                         <td className="py-2 pr-4">
-                          <Input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            inputMode="decimal"
+                          <MoneyInput
                             aria-label={`Payment for ${inv.number}`}
-                            aria-invalid={rowErrors.has(inv.id) || undefined}
-                            placeholder="0.00"
+                            invalid={rowErrors.has(inv.id)}
                             value={value}
-                            onChange={(e) => editAllocation(inv.id, e.target.value)}
-                            className="text-right tabular-nums"
+                            onValueChange={(v) => editAllocation(inv.id, v)}
                           />
                         </td>
                       </tr>
@@ -351,22 +362,20 @@ export function ReceivePaymentForm({
         </dl>
       )}
 
-      <div className="flex flex-wrap items-center justify-end gap-3">
-        {problem && (
-          <p className="mr-auto text-sm text-destructive" role="alert">
-            {problem}
-          </p>
-        )}
-        <Button type="submit" disabled={!canSubmit} className="rounded-full">
-          {pending ? "Recording…" : "Record payment"}
-        </Button>
-      </div>
-
-      {state.error ? (
-        <p className="text-sm text-destructive" role="alert">
-          {state.error}
-        </p>
-      ) : null}
+      <FormActions>
+        <div className="mr-auto min-w-0 text-[13px]" aria-live="polite">
+          {state.error || problem ? (
+            <p role="alert" className="flex items-start gap-1.5 text-destructive">
+              <Icons.alert className="mt-px size-4 shrink-0" />
+              <span>{state.error ?? problem}</span>
+            </p>
+          ) : null}
+        </div>
+        <CancelButton href="/sales" dirty={dirty} />
+        <SubmitButton pending={pending} pendingLabel="Recording…" disabled={problem !== null}>
+          Record payment
+        </SubmitButton>
+      </FormActions>
     </form>
   );
 }

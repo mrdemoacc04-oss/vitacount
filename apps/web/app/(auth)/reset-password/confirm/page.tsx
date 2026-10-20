@@ -1,45 +1,14 @@
-"use client";
+import type { Metadata } from "next";
+import { AuthHeading } from "@/components/auth/auth-shell";
+import { NewPasswordForm } from "@/components/auth/new-password-form";
 
-import { useActionState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { updatePassword, type AuthActionState } from "@/lib/actions/auth";
-
-const initialState: AuthActionState = { error: null };
+export const metadata: Metadata = { title: "Set a new password" };
 
 export default function ResetPasswordConfirmPage() {
-  const [state, formAction, pending] = useActionState(updatePassword, initialState);
-
   return (
-    <Card className="shadow-soft">
-      <CardHeader>
-        <CardTitle>Set a new password</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form action={formAction} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="password">New password</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              required
-              minLength={8}
-              autoComplete="new-password"
-            />
-          </div>
-          {state.error ? (
-            <p className="text-sm text-destructive" role="alert">
-              {state.error}
-            </p>
-          ) : null}
-          <Button type="submit" disabled={pending} className="w-full">
-            {pending ? "Saving…" : "Save password"}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+    <>
+      <AuthHeading title="Set a new password" description="Choose a password you don't use anywhere else." />
+      <NewPasswordForm submitLabel="Save and continue" />
+    </>
   );
 }

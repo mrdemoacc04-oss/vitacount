@@ -1,6 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
 import { loadTenantContext } from "@/lib/tenant/data";
-import { getDashboardFinancials, getOverdueInvoicesAlert } from "@/lib/dashboard-queries";
+import { getCashForecast, getDashboardFinancials, getOverdueInvoicesAlert } from "@/lib/dashboard-queries";
+import { getProjectSummaries } from "@/lib/projects";
+import { getLowStockItems } from "@/lib/inventory";
 import { comparisonLabel, resolveDashboardRange } from "@/lib/date-range";
 import { DashboardClient } from "./dashboard-client";
 
@@ -34,7 +36,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
 
   const firstName = (profile?.full_name ?? "there").split(" ")[0];
 
-  const [financials, bankAccountsResult, matchesResult, unmatchedResult, overdueAlerts, recentResult] = await Promise.all([
+  const [financials, bankAccountsResult, matchesResult, unmatchedResult, overdueAlerts, recentResult, forecast, projects, lowStock] = await Promise.all([
     // 1. KPIs, income/expense series, top expense categories — all for the selected range
     getDashboardFinancials(activeTenantId, range),
     // 2. Connected Bank Accounts
@@ -53,6 +55,11 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
       .lte("transaction_date", range.dataTo)
       .order("transaction_date", { ascending: false })
       .limit(10),
+    // 6. Next 30 days of cash from open invoices and bills
+    getCashForecast(activeTenantId),
+    // 7–8. Projects and stock (both return [] until their migration is applied)
+    getProjectSummaries(activeTenantId, 3),
+    getLowStockItems(activeTenantId),
   ]);
 
   const matches = matchesResult.data ?? [];
@@ -74,6 +81,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Se
       bankAccounts={bankAccountsResult.data || []}
       reconciliationSummary={reconciliationSummary}
       expenseCategories={financials.topExpenseCategories}
+      expenseSpikes={financials.expenseSpikes}
+      forecast={forecast}
+      projects={projects}
+      lowStock={lowStock}
       overdueAlerts={overdueAlerts}
       recentTransactions={recentResult.data || []}
     />

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { loadTenantContext } from "@/lib/tenant/data";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Icons } from "@/components/icons";
 import { ReceivePaymentForm, type OpenReceivable, type PayingCustomer } from "@/components/receive-payment-form";
 import { formatMoney } from "@/lib/money";
 
@@ -66,16 +66,15 @@ export default async function ReceivePaymentPage({ searchParams }: { searchParam
 
   return (
     <div className="mx-auto flex max-w-4xl flex-col gap-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="font-heading text-2xl font-semibold tracking-tight">Receive payment</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+      <div>
+        <Link href="/sales" className="inline-flex items-center gap-1 text-[13px] text-muted-foreground transition-colors hover:text-foreground">
+          <Icons.chevronRight className="size-3.5 rotate-180" />
+          Sales
+        </Link>
+        <h1 className="mt-2 font-heading text-2xl font-semibold tracking-tight">Receive payment</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
             Record one payment — a check or a transfer — and split it across a customer&apos;s open invoices.
           </p>
-        </div>
-        <Link href="/sales" className="text-sm font-medium text-primary hover:underline">
-          ← Back to sales
-        </Link>
       </div>
 
       {recordedPayment && (
@@ -89,33 +88,32 @@ export default async function ReceivePaymentPage({ searchParams }: { searchParam
       )}
 
       {customers.length ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Payment details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ReceivePaymentForm
-              // remount with fresh state after each recorded payment
-              key={recordedParam ?? "new"}
-              tenantId={activeTenantId}
-              customers={customers}
-              openInvoices={openInvoices}
-              defaultCustomerId={customers.some((c) => c.id === customerParam) ? customerParam : undefined}
-              focusInvoiceId={invoiceParam}
-            />
-          </CardContent>
-        </Card>
+        <div>
+          <ReceivePaymentForm
+            // remount with fresh state after each recorded payment
+            key={recordedParam ?? "new"}
+            tenantId={activeTenantId}
+            customers={customers}
+            openInvoices={openInvoices}
+            defaultCustomerId={customers.some((c) => c.id === customerParam) ? customerParam : undefined}
+            focusInvoiceId={invoiceParam}
+          />
+        </div>
       ) : (
-        <Card>
-          <CardContent>
-            <p className="text-sm text-muted-foreground">
-              Add a customer first.{" "}
-              <Link href="/contacts" className="text-primary hover:underline">
-                Add a contact →
-              </Link>
-            </p>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col items-center rounded-xl border border-dashed border-border bg-card px-6 py-14 text-center">
+          <span className="flex size-10 items-center justify-center rounded-full bg-accent text-primary">
+            <Icons.userPlus className="size-5" />
+          </span>
+          <h2 className="mt-4 text-[15px] font-semibold text-foreground">Add a customer first</h2>
+          <p className="mt-1 max-w-sm text-sm text-muted-foreground">Payments are recorded against a customer. Add one and you&apos;ll come straight back here.</p>
+          <Link
+            href="/contacts/new?type=customer&returnTo=%2Fsales%2Freceive-payment"
+            className="mt-5 inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-[13px] font-medium text-primary-foreground shadow-soft-sm hover:bg-primary/90"
+          >
+            <Icons.plus className="size-4" />
+            New customer
+          </Link>
+        </div>
       )}
     </div>
   );

@@ -220,7 +220,7 @@ export function addressLines(address: unknown): string[] {
   const a = address as Record<string, unknown>;
   const pick = (...keys: string[]) =>
     keys.map((k) => a[k]).find((v): v is string => typeof v === "string" && v.trim() !== "")?.trim();
-  const cityLine = [pick("city"), [pick("state", "region"), pick("postal_code", "zip", "postcode")].filter(Boolean).join(" ")]
+  const cityLine = [pick("city"), [pick("state", "region"), pick("postalCode", "postal_code", "zip", "postcode")].filter(Boolean).join(" ")]
     .filter(Boolean)
     .join(", ");
   return [pick("line1", "street", "address1"), pick("line2", "address2"), cityLine, pick("country")].filter(

@@ -7,9 +7,13 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-ibm-plex-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-inter-tight), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-instrument-serif), ui-serif, Georgia, serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-surface: var(--surface);
   --color-positive: var(--positive);
   --color-warning: var(--warning);
   --color-series-income: var(--series-income);
@@ -50,100 +54,113 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --ease-out-quint: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 :root {
-  /* VitaCount — light mode: crisp white/silver surfaces, refined royal-blue brand.
-     Financial direction (income/expense) stays semantically green/red regardless
-     of brand color — --positive/--destructive are independent of --primary. */
-  --background: oklch(0.984 0.004 255);
-  --foreground: oklch(0.24 0.03 261);
+  /* VitaCount — light. Royal blue is the one brand color (actions, active states,
+     logo, focus); every surface and line comes from a single cool gray family tinted
+     toward it (hue 258). Money direction stays semantically green/red via
+     --positive/--destructive, independent of the brand. */
+  --background: oklch(0.975 0.004 258); /* the app frame the sidebar sits on */
+  --surface: oklch(1 0 0); /* the content panel */
+  --foreground: oklch(0.22 0.02 262);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.24 0.03 261);
+  --card-foreground: oklch(0.22 0.02 262);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.24 0.03 261);
+  --popover-foreground: oklch(0.22 0.02 262);
   --primary: oklch(0.53 0.19 262);
-  --primary-foreground: oklch(0.99 0.003 255);
-  --secondary: oklch(0.96 0.008 255);
-  --secondary-foreground: oklch(0.28 0.03 261);
-  --muted: oklch(0.96 0.008 255);
-  --muted-foreground: oklch(0.5 0.02 261);
-  --accent: oklch(0.94 0.03 262);
-  --accent-foreground: oklch(0.32 0.05 262);
-  --destructive: oklch(0.58 0.22 27);
-  --positive: oklch(0.6 0.16 152);
-  --warning: oklch(0.75 0.16 75);
-  --border: oklch(0.91 0.008 255);
-  --input: oklch(0.91 0.008 255);
-  --ring: oklch(0.53 0.19 262 / 45%);
+  --primary-foreground: oklch(0.99 0.003 258);
+  --brand: oklch(0.53 0.19 262);
+  --brand-foreground: oklch(0.99 0.003 258);
+  --secondary: oklch(0.96 0.008 258);
+  --secondary-foreground: oklch(0.26 0.03 262);
+  --muted: oklch(0.963 0.006 258);
+  --muted-foreground: oklch(0.52 0.02 262);
+  --accent: oklch(0.955 0.018 262);
+  --accent-foreground: oklch(0.3 0.08 262);
+  --destructive: oklch(0.57 0.2 27);
+  --positive: oklch(0.57 0.14 155);
+  --warning: oklch(0.73 0.15 70);
+  --border: oklch(0.918 0.008 258);
+  --input: oklch(0.9 0.01 258);
+  --ring: oklch(0.53 0.19 262 / 40%);
   --chart-1: oklch(0.53 0.19 262);
-  --chart-2: oklch(0.68 0.14 235);
-  --chart-3: oklch(0.75 0.16 75);
-  --chart-4: oklch(0.58 0.22 27);
-  --chart-5: oklch(0.62 0.02 261);
+  --chart-2: oklch(0.7 0.12 225);
+  --chart-3: oklch(0.73 0.15 70);
+  --chart-4: oklch(0.57 0.2 27);
+  --chart-5: oklch(0.65 0.02 262);
   /* Income vs. expenses series — a validated blue/orange pair (colorblind-safe, ≥3:1 on
-     the surface). Chart-1/chart-2 were too close to tell apart in dark mode. */
+     the surface). */
   --series-income: oklch(0.531 0.189 261.8);
   --series-expense: oklch(0.671 0.175 40.6);
-  --radius: 1rem;
-  --sidebar: oklch(1 0 0);
-  --sidebar-foreground: oklch(0.24 0.03 261);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.975 0.004 258);
+  --sidebar-foreground: oklch(0.22 0.02 262);
   --sidebar-primary: oklch(0.53 0.19 262);
-  --sidebar-primary-foreground: oklch(0.99 0.003 255);
-  --sidebar-accent: oklch(0.96 0.008 255);
-  --sidebar-accent-foreground: oklch(0.28 0.03 261);
-  --sidebar-border: oklch(0.93 0.008 255);
-  --sidebar-ring: oklch(0.53 0.19 262 / 45%);
+  --sidebar-primary-foreground: oklch(0.99 0.003 258);
+  --sidebar-accent: oklch(0.935 0.025 262);
+  --sidebar-accent-foreground: oklch(0.3 0.1 262);
+  --sidebar-border: oklch(0.918 0.008 258);
+  --sidebar-ring: oklch(0.53 0.19 262 / 40%);
 }
 
 .dark {
-  /* VitaCount — dark mode: deep navy surfaces, the same royal-blue brand. */
-  --background: oklch(0.17 0.025 261);
-  --foreground: oklch(0.94 0.012 255);
-  --card: oklch(0.21 0.028 261);
-  --card-foreground: oklch(0.94 0.012 255);
-  --popover: oklch(0.21 0.028 261);
-  --popover-foreground: oklch(0.94 0.012 255);
-  --primary: oklch(0.68 0.17 262);
-  --primary-foreground: oklch(0.14 0.03 262);
-  --secondary: oklch(0.28 0.03 261);
-  --secondary-foreground: oklch(0.94 0.012 255);
-  --muted: oklch(0.25 0.028 261);
-  --muted-foreground: oklch(0.66 0.02 258);
-  --accent: oklch(0.3 0.05 262);
-  --accent-foreground: oklch(0.9 0.03 255);
-  --destructive: oklch(0.66 0.19 25);
-  --positive: oklch(0.68 0.16 152);
-  --warning: oklch(0.78 0.15 75);
-  --border: oklch(1 0 0 / 9%);
-  --input: oklch(1 0 0 / 13%);
-  --ring: oklch(0.68 0.17 262 / 45%);
-  --chart-1: oklch(0.68 0.17 262);
-  --chart-2: oklch(0.72 0.13 225);
-  --chart-3: oklch(0.78 0.15 75);
-  --chart-4: oklch(0.66 0.19 25);
-  --chart-5: oklch(0.62 0.02 258);
+  /* VitaCount — dark. Deep navy surfaces, the same royal blue lifted for contrast. */
+  --background: oklch(0.155 0.02 262);
+  --surface: oklch(0.185 0.022 262);
+  --foreground: oklch(0.95 0.008 258);
+  --card: oklch(0.205 0.024 262);
+  --card-foreground: oklch(0.95 0.008 258);
+  --popover: oklch(0.215 0.025 262);
+  --popover-foreground: oklch(0.95 0.008 258);
+  --primary: oklch(0.66 0.17 262);
+  --primary-foreground: oklch(0.99 0.003 258);
+  --brand: oklch(0.66 0.17 262);
+  --brand-foreground: oklch(0.99 0.003 258);
+  --secondary: oklch(0.26 0.025 262);
+  --secondary-foreground: oklch(0.95 0.008 258);
+  --muted: oklch(0.24 0.024 262);
+  --muted-foreground: oklch(0.68 0.02 258);
+  --accent: oklch(0.28 0.05 262);
+  --accent-foreground: oklch(0.92 0.03 258);
+  --destructive: oklch(0.66 0.18 25);
+  --positive: oklch(0.7 0.14 155);
+  --warning: oklch(0.78 0.14 75);
+  --border: oklch(1 0 0 / 8%);
+  --input: oklch(1 0 0 / 12%);
+  --ring: oklch(0.66 0.17 262 / 45%);
+  --chart-1: oklch(0.66 0.17 262);
+  --chart-2: oklch(0.72 0.12 225);
+  --chart-3: oklch(0.78 0.14 75);
+  --chart-4: oklch(0.66 0.18 25);
+  --chart-5: oklch(0.6 0.02 258);
   --series-income: oklch(0.622 0.161 255.1);
   --series-expense: oklch(0.622 0.173 40.1);
-  --sidebar: oklch(0.15 0.025 261);
-  --sidebar-foreground: oklch(0.94 0.012 255);
-  --sidebar-primary: oklch(0.68 0.17 262);
-  --sidebar-primary-foreground: oklch(0.14 0.03 262);
-  --sidebar-accent: oklch(0.25 0.028 261);
-  --sidebar-accent-foreground: oklch(0.94 0.012 255);
-  --sidebar-border: oklch(1 0 0 / 9%);
-  --sidebar-ring: oklch(0.68 0.17 262 / 45%);
+  --sidebar: oklch(0.155 0.02 262);
+  --sidebar-foreground: oklch(0.95 0.008 258);
+  --sidebar-primary: oklch(0.66 0.17 262);
+  --sidebar-primary-foreground: oklch(0.99 0.003 258);
+  --sidebar-accent: oklch(0.25 0.04 262);
+  --sidebar-accent-foreground: oklch(0.95 0.008 258);
+  --sidebar-border: oklch(1 0 0 / 7%);
+  --sidebar-ring: oklch(0.66 0.17 262 / 45%);
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
   html {
     @apply font-sans;
+    /* Inter's single-storey "a" (cv11) moves it off its stock look. */
+    font-feature-settings: "cv11";
+    font-optical-sizing: auto;
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-background text-foreground;
+    text-rendering: optimizeLegibility;
   }
   h1,
   h2,
@@ -152,6 +169,24 @@
   h5,
   h6 {
     @apply font-heading;
+    text-wrap: balance;
+  }
+  h1 {
+    letter-spacing: -0.022em;
+  }
+  h2,
+  h3 {
+    letter-spacing: -0.012em;
+  }
+  p {
+    text-wrap: pretty;
+  }
+  ::selection {
+    background: color-mix(in oklch, var(--brand) 22%, transparent);
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
   }
 }
 
@@ -160,26 +195,25 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* Soft Structuralism surfaces: diffused, hue-tinted ambient shadows instead of
-     hard black drop-shadows — the light theme's primary elevation technique. */
+  /* Elevation: one light source from above, shadows tinted with the neutral hue. */
   .shadow-soft {
     box-shadow:
-      0 1px 2px oklch(0.24 0.03 261 / 4%),
-      0 8px 24px -8px oklch(0.24 0.03 261 / 8%),
-      0 24px 48px -24px oklch(0.53 0.19 262 / 10%);
+      0 0 0 1px oklch(0.22 0.02 262 / 5%),
+      0 2px 4px -1px oklch(0.22 0.02 262 / 5%),
+      0 12px 32px -8px oklch(0.3 0.08 262 / 12%);
   }
   .dark .shadow-soft {
     box-shadow:
-      0 1px 2px oklch(0 0 0 / 20%),
-      0 12px 32px -12px oklch(0 0 0 / 45%);
+      0 0 0 1px oklch(1 0 0 / 8%),
+      0 16px 40px -12px oklch(0 0 0 / 60%);
   }
   .shadow-soft-sm {
     box-shadow:
-      0 1px 2px oklch(0.24 0.03 261 / 4%),
-      0 4px 12px -4px oklch(0.24 0.03 261 / 7%);
+      0 1px 2px oklch(0.22 0.02 262 / 5%),
+      0 1px 1px oklch(0.22 0.02 262 / 3%);
   }
   .dark .shadow-soft-sm {
-    box-shadow: 0 4px 16px -6px oklch(0 0 0 / 40%);
+    box-shadow: 0 1px 2px oklch(0 0 0 / 40%);
   }
 
   .scrollbar-none {
@@ -188,6 +222,49 @@
   }
   .scrollbar-none::-webkit-scrollbar {
     display: none;
+  }
+}
+
+/* Popovers and menus open with a short fade-slide away from their anchor. */
+@keyframes pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px) scale(0.985);
+  }
+}
+@keyframes pop-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.985);
+  }
+}
+.animate-pop-in {
+  animation: pop-in 160ms var(--ease-out-quint) both;
+}
+.animate-pop-in-up {
+  animation: pop-in-up 160ms var(--ease-out-quint) both;
+}
+
+/* Page content settles in on navigation instead of popping. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.animate-rise-in {
+  animation: rise-in 360ms var(--ease-out-quint) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pop-in,
+  .animate-pop-in-up,
+  .animate-rise-in {
+    animation: none;
   }
 }
 
@@ -218,5 +295,245 @@
   .print-root * {
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+  }
+}
+
+/* The VitaCount mascot wrapper: tilts on hover and hops on click. The pulse
+   itself is drawn per-cell on the mascot's canvas, not here. */
+@keyframes mascot-hop {
+  0% { transform: translateY(0) scale(1, 1); }
+  20% { transform: translateY(2px) scale(1.08, 0.9); }
+  55% { transform: translateY(-16px) scale(0.94, 1.08); }
+  80% { transform: translateY(0) scale(1.05, 0.95); }
+  100% { transform: translateY(0) scale(1, 1); }
+}
+
+.mascot-idle {
+  display: inline-block;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  transition: transform 150ms ease-out;
+}
+
+.mascot-idle.mascot-hop {
+  animation: mascot-hop 550ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mascot-idle.mascot-hop {
+    animation: none;
+  }
+}
+
+/* Vita agent: click ripple, "Vita is in control" edge glow, live bar entrance, voice level bars. */
+@keyframes vita-click {
+  0% { transform: scale(0.3); opacity: 0.9; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+.vita-click-ripple {
+  animation: vita-click 480ms ease-out forwards;
+}
+
+@keyframes vita-glow {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+.vita-control-glow {
+  box-shadow:
+    inset 0 0 0 2px color-mix(in oklch, var(--primary) 70%, transparent),
+    inset 0 0 48px color-mix(in oklch, var(--primary) 28%, transparent);
+  animation: vita-glow 2.4s ease-in-out infinite;
+}
+
+@keyframes vita-rise {
+  from { transform: translate(-50%, 16px); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+.vita-bar-enter {
+  animation: vita-rise 220ms cubic-bezier(0.22, 0.75, 0.25, 1);
+}
+
+@keyframes vita-level {
+  0%, 100% { transform: scaleY(0.35); }
+  50% { transform: scaleY(1); }
+}
+
+.vita-level > span {
+  display: inline-block;
+  width: 3px;
+  height: 14px;
+  border-radius: 9999px;
+  background: currentColor;
+  transform-origin: center;
+  animation: vita-level 0.9s ease-in-out infinite;
+}
+.vita-level > span:nth-child(2) { animation-delay: 0.15s; }
+.vita-level > span:nth-child(3) { animation-delay: 0.3s; }
+.vita-level > span:nth-child(4) { animation-delay: 0.45s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .vita-click-ripple,
+  .vita-control-glow,
+  .vita-bar-enter,
+  .vita-level > span {
+    animation: none;
+  }
+}
+/* Sidebar icon motion. Each nav icon tags its moving parts with `im-*` classes
+   (components/icons.tsx); a part plays its move once when its row is hovered or
+   keyboard-focused, and once more when the row becomes the current page. Every
+   keyframe ends where it starts, so the icon always settles back to its drawing. */
+.nav-motion [class^="im-"],
+.nav-motion [class*=" im-"] {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.nav-motion:is(:hover, :focus-visible, [aria-current="page"]) {
+  --im-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  .im-tile { animation: im-pop 520ms var(--im-spring) both; }
+  .im-tile:nth-child(2) { animation-delay: 60ms; }
+  .im-tile:nth-child(3) { animation-delay: 120ms; }
+  .im-tile:nth-child(4) { animation-delay: 180ms; }
+
+  .im-nudge-r { animation: im-nudge-r 520ms var(--im-spring); }
+  .im-nudge-l { animation: im-nudge-l 520ms var(--im-spring); }
+
+  .im-shoot-ur { animation: im-shoot-ur 560ms var(--ease-out-quint); }
+  .im-shoot-dl { animation: im-shoot-dl 560ms var(--ease-out-quint); }
+
+  .im-lift { animation: im-lift 520ms var(--im-spring); }
+  .im-grow { transform-origin: bottom; animation: im-grow 520ms var(--im-spring) both; }
+  .im-grow:nth-child(2) { animation-delay: 50ms; }
+  .im-grow:nth-child(3) { animation-delay: 100ms; }
+  .im-grow:nth-child(4) { animation-delay: 150ms; }
+  .im-grow:nth-child(5) { animation-delay: 200ms; }
+
+  .im-nod { animation: im-nod 520ms var(--im-spring); }
+  .im-wiggle { transform-origin: bottom left; animation: im-wiggle 600ms ease-in-out; }
+  .im-hop { transform-origin: bottom; animation: im-hop 560ms ease-out; }
+
+  .im-write { animation: im-write 420ms var(--ease-out-quint) both; }
+  .im-write ~ .im-write { animation-delay: 120ms; }
+
+  .im-rays { animation: im-rays 600ms var(--ease-out-quint); }
+  .im-spin { animation: im-spin 600ms var(--im-spring); }
+
+  .im-tilt { animation: im-tilt 560ms var(--im-spring); }
+  .im-tilt .im-write { animation-delay: 140ms; }
+
+  .im-row { transform-origin: left; animation: im-row 480ms var(--ease-out-quint) both; }
+  .im-row:nth-child(2) { animation-delay: 60ms; }
+  .im-row:nth-child(3) { animation-delay: 120ms; }
+
+  .im-bob { animation: im-bob 480ms var(--im-spring) both; }
+  .im-bob + .im-bob { animation-delay: 110ms; }
+
+  .im-knob-a { animation: im-knob-a 720ms ease-in-out; }
+  .im-track-a { animation: im-track-a 720ms ease-in-out; }
+  .im-knob-b { animation: im-knob-b 720ms ease-in-out; }
+  .im-track-b { animation: im-track-b 720ms ease-in-out; }
+}
+
+@keyframes im-pop {
+  0%, 100% { transform: scale(1); }
+  35% { transform: scale(0.72); }
+}
+@keyframes im-nudge-r {
+  0%, 100% { transform: none; }
+  40% { transform: translateX(3px); }
+}
+@keyframes im-nudge-l {
+  0%, 100% { transform: none; }
+  40% { transform: translateX(-3px); }
+}
+/* the arrow flies out of its corner and slides back in from the opposite one */
+@keyframes im-shoot-ur {
+  0% { transform: none; opacity: 1; }
+  40% { transform: translate(6px, -6px); opacity: 0; }
+  41% { transform: translate(-6px, 6px); opacity: 0; }
+  100% { transform: none; opacity: 1; }
+}
+@keyframes im-shoot-dl {
+  0% { transform: none; opacity: 1; }
+  40% { transform: translate(-6px, 6px); opacity: 0; }
+  41% { transform: translate(6px, -6px); opacity: 0; }
+  100% { transform: none; opacity: 1; }
+}
+@keyframes im-lift {
+  0%, 100% { transform: none; }
+  35% { transform: translateY(-2px); }
+}
+@keyframes im-grow {
+  0%, 100% { transform: scaleY(1); }
+  30% { transform: scaleY(0.3); }
+}
+@keyframes im-nod {
+  0%, 100% { transform: none; }
+  35% { transform: translateY(-2px); }
+}
+@keyframes im-wiggle {
+  0%, 100% { transform: none; }
+  25% { transform: rotate(-9deg); }
+  55% { transform: rotate(5deg); }
+  80% { transform: rotate(-2deg); }
+}
+@keyframes im-hop {
+  0%, 100% { transform: none; }
+  15% { transform: scale(1.06, 0.9); }
+  45% { transform: translateY(-3px) scale(0.96, 1.05); }
+  75% { transform: scale(1.04, 0.96); }
+}
+@keyframes im-write {
+  from { stroke-dasharray: 1; stroke-dashoffset: 1; }
+  to { stroke-dasharray: 1; stroke-dashoffset: 0; }
+}
+@keyframes im-rays {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  30% { transform: scale(0.75); opacity: 0.4; }
+}
+/* the sparkle is four-fold symmetric, so a quarter turn lands on its own drawing */
+@keyframes im-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(90deg); }
+}
+@keyframes im-tilt {
+  0%, 100% { transform: none; }
+  35% { transform: rotate(-8deg) translateY(-1px); }
+}
+@keyframes im-row {
+  0%, 100% { transform: scaleX(1); }
+  30% { transform: scaleX(0.35); }
+}
+@keyframes im-bob {
+  0%, 100% { transform: none; }
+  35% { transform: translateY(-2.5px); }
+}
+/* the knobs slide toward each other; the track's dash gap travels with them */
+@keyframes im-knob-a {
+  0%, 100% { transform: none; }
+  40%, 60% { transform: translateX(-4px); }
+}
+@keyframes im-track-a {
+  0%, 100% { stroke-dasharray: 9 4 2 100; }
+  40%, 60% { stroke-dasharray: 5 4 6 100; }
+}
+@keyframes im-knob-b {
+  0%, 100% { transform: none; }
+  40%, 60% { transform: translateX(4px); }
+}
+@keyframes im-track-b {
+  0%, 100% { stroke-dasharray: 2 4 9 100; }
+  40%, 60% { stroke-dasharray: 6 4 5 100; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-motion [class^="im-"],
+  .nav-motion [class*=" im-"] {
+    animation: none !important;
   }
 }

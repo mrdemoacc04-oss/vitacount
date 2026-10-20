@@ -1,17 +1,13 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { Metadata } from "next";
+import { CheckEmail } from "@/components/auth/check-email";
 
-export default function CheckEmailPage() {
+export const metadata: Metadata = { title: "Confirm your email" };
+
+export default async function CheckEmailPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
+  const { email } = await searchParams;
   return (
-    <Card className="shadow-soft">
-      <CardHeader>
-        <CardTitle>Check your email</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground">
-          We sent a confirmation link to your inbox. Click it to verify your
-          account, then come back and log in.
-        </p>
-      </CardContent>
-    </Card>
+    <CheckEmail email={typeof email === "string" ? email : undefined} title="Confirm your email">
+      Click it to verify your account and set up your workspace.
+    </CheckEmail>
   );
 }

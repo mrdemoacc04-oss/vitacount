@@ -14,13 +14,22 @@ export function PercentInput({
   onChange,
   className,
   id,
+  name,
+  invalid,
   "aria-label": ariaLabel = "Tax rate (percent)",
+  "aria-describedby": describedBy,
+  "data-field": dataField,
 }: {
   value: string;
   onChange: (value: string) => void;
   className?: string;
   id?: string;
+  name?: string;
+  /** an error reported by the form (the input also flags its own parse errors) */
+  invalid?: boolean;
   "aria-label"?: string;
+  "aria-describedby"?: string;
+  "data-field"?: string;
 }) {
   const parsed = parsePercent(value);
   const error = parsed.ok ? null : parsed.error;
@@ -29,23 +38,26 @@ export function PercentInput({
     <div className={cn("relative", className)}>
       <input
         id={id}
+        name={name}
         type="text"
         inputMode="decimal"
         autoComplete="off"
         value={value}
+        data-field={dataField}
         onChange={(e) => onChange(sanitizePercentInput(e.target.value))}
         onBlur={() => onChange(normalizePercentText(value))}
         aria-label={ariaLabel}
-        aria-invalid={error ? true : undefined}
+        aria-invalid={error || invalid ? true : undefined}
+        aria-describedby={describedBy}
         title={error ?? undefined}
-        className="h-8 w-full min-w-0 rounded-lg border border-input bg-transparent py-1 pl-2.5 pr-6 text-right text-base tabular-nums outline-none transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30"
+        className="h-9 w-full min-w-0 rounded-lg border border-input bg-card py-1 pl-2.5 pr-7 text-right text-sm tabular-nums text-foreground shadow-soft-sm outline-none transition-[border-color,box-shadow] placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/40 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/15"
         placeholder="0"
       />
       <span className="pointer-events-none absolute inset-y-0 right-2.5 flex items-center text-sm text-muted-foreground" aria-hidden="true">
         %
       </span>
       {error && (
-        <span className="absolute left-0 top-full z-10 mt-1 whitespace-nowrap rounded-md bg-destructive px-1.5 py-0.5 text-[10.5px] font-medium text-white" role="alert">
+        <span className="absolute right-0 top-full z-10 mt-1 whitespace-nowrap rounded-md bg-destructive px-1.5 py-0.5 text-[10.5px] font-medium text-white" role="alert">
           {error}
         </span>
       )}

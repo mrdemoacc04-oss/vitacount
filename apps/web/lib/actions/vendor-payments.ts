@@ -7,7 +7,7 @@ import { friendlyDbError } from "@/lib/db-errors";
 import { isISODate, todayISO } from "@/lib/dates";
 import { normalizeAmount } from "@/lib/money";
 
-export type RecordVendorPaymentState = { error: string | null };
+export type RecordVendorPaymentState = { error: string | null; fieldErrors?: Record<string, string> };
 
 export async function recordVendorPaymentAction(
   tenantId: string,
@@ -22,12 +22,11 @@ export async function recordVendorPaymentAction(
   const reference = String(formData.get("reference") ?? "").trim();
   const scheduledFor = String(formData.get("scheduledFor") ?? "").trim();
 
-  if (!(amount > 0)) {
-    return { error: "Enter a payment amount greater than zero." };
-  }
-  if (!isISODate(paymentDate)) {
-    return { error: "Pick the payment date." };
-  }
+  const fieldErrors: Record<string, string> = {};
+  if (!isISODate(paymentDate)) fieldErrors.paymentDate = "Pick the payment date.";
+  if (!(amount > 0)) fieldErrors.amount = "Enter an amount greater than zero.";
+  if (scheduledFor && !isISODate(scheduledFor)) fieldErrors.scheduledFor = "Enter a valid date, or leave it blank to pay now.";
+  if (Object.keys(fieldErrors).length > 0) return { error: null, fieldErrors };
 
   const supabase = await createClient();
   const isFutureScheduled = isISODate(scheduledFor) && scheduledFor > todayISO();

@@ -142,7 +142,7 @@ export function IncomeExpenseChart({
       {/* Header: title, legend (with period totals), view controls */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="font-heading text-sm font-semibold text-foreground">Income vs. expenses</h2>
+          <h2 className="text-[15px] font-semibold text-foreground">Income vs. expenses</h2>
           <ul className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs" aria-label="Legend">
             <li className="flex items-center gap-1.5">
               <span className="size-2.5 rounded-[3px] bg-series-income" aria-hidden="true" />

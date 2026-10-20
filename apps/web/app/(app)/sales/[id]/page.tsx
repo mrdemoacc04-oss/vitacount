@@ -7,7 +7,8 @@ import { IssueInvoiceButton } from "@/components/issue-invoice-button";
 import { RecordInvoicePaymentForm } from "@/components/record-invoice-payment-form";
 import { CreateStripeLinkButton } from "@/components/create-stripe-link-button";
 import { DocumentPrintActions } from "@/components/document-preview";
-import { SalesDocumentPaper, type PrintableSalesDocument } from "@/components/sales-document-paper";
+import { SalesDocumentPaper, type PrintableBusiness, type PrintableSalesDocument } from "@/components/sales-document-paper";
+import { workspaceAddressLines } from "@/components/settings/options";
 import { formatDate } from "@/lib/dates";
 import {
   SALES_STATUS_STYLE,
@@ -41,14 +42,34 @@ export default async function SalesDocumentPage({
 
   if (!invoice) notFound();
 
-  const [{ data: lines }, { data: payments }] = await Promise.all([
+  const [{ data: lines }, { data: payments }, { data: workspace }] = await Promise.all([
     supabase.from("invoice_lines").select("id, description, quantity, unit_price, tax_rate, amount").eq("invoice_id", id).order("sort_order"),
     supabase
       .from("payment_applications")
       .select("amount_applied, payment:payments_received(payment_date, method, reference)")
       .eq("invoice_id", id)
       .order("created_at"),
+    // Workspace profile columns (20261008120000). If that migration isn't applied the
+    // query errors, data is null, and the paper falls back to just the workspace name.
+    supabase
+      .from("tenants")
+      .select("legal_name, tax_id, email, phone, website, address, invoice_notes, invoice_footer")
+      .eq("id", activeTenantId)
+      .maybeSingle(),
   ]);
+
+  const business: PrintableBusiness | null = workspace
+    ? {
+        legalName: workspace.legal_name,
+        addressLines: workspaceAddressLines(workspace.address),
+        email: workspace.email,
+        phone: workspace.phone,
+        website: workspace.website,
+        taxId: workspace.tax_id,
+        invoiceNotes: workspace.invoice_notes,
+        invoiceFooter: workspace.invoice_footer,
+      }
+    : null;
 
   const documentType = isSalesDocumentType(invoice.document_type) ? invoice.document_type : "invoice";
   const config = salesDocumentConfig(documentType);
@@ -95,7 +116,7 @@ export default async function SalesDocumentPage({
             {salesStatusLabel(documentType, invoice.status)}
           </span>
           <DocumentPrintActions title={`${config.label} ${invoice.invoice_number}`} fileName={`${invoice.invoice_number} – ${customerName}`}>
-            <SalesDocumentPaper doc={printable} businessName={activeTenant?.name ?? "Your business"} />
+            <SalesDocumentPaper doc={printable} businessName={activeTenant?.name ?? "Your business"} business={business} />
           </DocumentPrintActions>
         </div>
       </div>

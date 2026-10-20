@@ -2,9 +2,9 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { loadTenantContext } from "@/lib/tenant/data";
 import { TenantProvider } from "@/lib/tenant/context";
-import { Header } from "@/components/header";
-import { Sidebar } from "@/components/sidebar";
-import { ModuleTabs } from "@/components/module-tabs";
+import { AppShell } from "@/components/app-shell";
+import { AgentChat } from "@/components/agent-chat";
+import { AgentCursor } from "@/components/agent-cursor";
 
 export default async function AppLayout({
   children,
@@ -35,19 +35,11 @@ export default async function AppLayout({
 
   return (
     <TenantProvider value={{ memberships, activeTenantId, activeTenant, role }}>
-      <div className="flex min-h-full flex-1 bg-background">
-        <Sidebar
-          fullName={profile?.full_name ?? null}
-          planName={`${activeTenant?.plan_tier ?? "Starter"} Plan`}
-        />
-        <div className="flex min-h-full flex-1 flex-col">
-          <Header />
-          <div className="px-4 pt-5 md:px-6">
-            <ModuleTabs />
-          </div>
-          <main className="flex-1 px-4 py-6 md:px-6 md:py-8">{children}</main>
-        </div>
-      </div>
+      <AppShell fullName={profile?.full_name ?? null} email={user.email ?? null}>
+        {children}
+      </AppShell>
+      <AgentChat />
+      <AgentCursor />
     </TenantProvider>
   );
 }

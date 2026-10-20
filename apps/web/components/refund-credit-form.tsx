@@ -1,16 +1,19 @@
 "use client";
 
-import { useActionState, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { Icons } from "@/components/icons";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field, FormActions, Select, SubmitButton } from "@/components/ui/field";
+import { CancelButton } from "@/components/forms/cancel-button";
+import { MoneyInput } from "@/components/forms/money-input";
+import { useActionForm, useUnsavedChangesWarning, type FieldErrors } from "@/components/forms/use-action-form";
 import { refundCustomerCreditAction, type RefundCreditState } from "@/lib/actions/invoices";
-import { todayISO } from "@/lib/dates";
+import { isISODate, todayISO } from "@/lib/dates";
 import { PAYMENT_METHODS } from "@/lib/documents";
-import { formatMoney } from "@/lib/money";
+import { formatMoney, toScaled } from "@/lib/money";
+import { cn } from "@/lib/utils";
 
 const initialState: RefundCreditState = { error: null };
-const selectClass = "h-9 w-full rounded-lg border border-border bg-background px-3 text-sm";
 
 export type CustomerCredit = { id: string; name: string; credit: number };
 
@@ -24,83 +27,103 @@ export function RefundCreditForm({
   customers: CustomerCredit[];
   defaultCustomerId?: string;
 }) {
-  const [state, formAction, pending] = useActionState(refundCustomerCreditAction.bind(null, tenantId), initialState);
   const initial = customers.find((c) => c.id === defaultCustomerId) ?? customers[0];
   const [contactId, setContactId] = useState(initial?.id ?? "");
   const [amount, setAmount] = useState(initial ? initial.credit.toFixed(2) : "");
+  const [refundDate, setRefundDate] = useState(todayISO());
+  const [method, setMethod] = useState("");
+  const [reference, setReference] = useState("");
   const selected = customers.find((c) => c.id === contactId);
 
+  function validate(): FieldErrors {
+    const found: FieldErrors = {};
+    const cents = toScaled(amount, 2) ?? BigInt(0);
+    if (!contactId) found.contactId = "Choose a customer.";
+    if (!isISODate(refundDate)) found.refundDate = "Pick the refund date.";
+    if (cents <= BigInt(0)) found.amount = "Enter the amount to refund.";
+    else if (selected && cents > (toScaled(selected.credit.toFixed(2), 2) ?? BigInt(0)))
+      found.amount = `Can't be more than the ${formatMoney(selected.credit)} available.`;
+    if (!method) found.method = "Choose how the refund was paid.";
+    return found;
+  }
+
+  const { state, pending, errors, dirty, formProps } = useActionForm(refundCustomerCreditAction.bind(null, tenantId), initialState, validate);
+  useUnsavedChangesWarning(dirty && !pending);
+
   return (
-    <form action={formAction} className="flex flex-col gap-5">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-        <div className="flex flex-col gap-2 sm:col-span-2">
-          <Label htmlFor="creditContactId">Customer</Label>
-          <select
-            id="creditContactId"
-            name="contactId"
+    <form {...formProps} className="flex flex-col gap-6">
+      <section className="rounded-xl border border-border bg-card p-5 shadow-soft-sm md:p-6" aria-label="Refund details">
+        <div className="grid grid-cols-1 gap-x-4 gap-y-5 md:grid-cols-6">
+          <Field label="Customer" htmlFor="creditContactId" required error={errors.contactId} className="md:col-span-3">
+            <Select
+              id="creditContactId"
+              name="contactId"
+              value={contactId}
+              onChange={(e) => {
+                setContactId(e.target.value);
+                const c = customers.find((x) => x.id === e.target.value);
+                setAmount(c ? c.credit.toFixed(2) : "");
+              }}
+              aria-invalid={errors.contactId ? true : undefined}
+            >
+              {customers.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name} — {formatMoney(c.credit)} available
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field
+            label="Amount to refund"
+            htmlFor="creditAmount"
             required
-            value={contactId}
-            onChange={(e) => {
-              setContactId(e.target.value);
-              const c = customers.find((x) => x.id === e.target.value);
-              setAmount(c ? c.credit.toFixed(2) : "");
-            }}
-            className={selectClass}
+            error={errors.amount}
+            hint={selected ? `Up to ${formatMoney(selected.credit)}.` : undefined}
+            className="md:col-span-3"
           >
-            {customers.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name} — {formatMoney(c.credit)} available
-              </option>
-            ))}
-          </select>
+            <MoneyInput id="creditAmount" name="amount" value={amount} onValueChange={setAmount} invalid={!!errors.amount} />
+          </Field>
+          <Field label="Refund date" htmlFor="refundDate" required error={errors.refundDate} className="md:col-span-2">
+            <Input
+              id="refundDate"
+              name="refundDate"
+              type="date"
+              value={refundDate}
+              onChange={(e) => setRefundDate(e.target.value)}
+              aria-invalid={errors.refundDate ? true : undefined}
+              className="h-9"
+            />
+          </Field>
+          <Field label="Refunded by" htmlFor="creditMethod" required error={errors.method} className="md:col-span-2">
+            <Select id="creditMethod" name="method" value={method} onChange={(e) => setMethod(e.target.value)} aria-invalid={errors.method ? true : undefined}>
+              <option value="">Choose a method</option>
+              {PAYMENT_METHODS.map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.label}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Reference" htmlFor="creditReference" optional hint="Check number or transfer ID." className="md:col-span-2">
+            <Input id="creditReference" name="reference" placeholder="e.g. 10442" value={reference} onChange={(e) => setReference(e.target.value)} className="h-9" />
+          </Field>
         </div>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="refundDate">Refund date</Label>
-          <Input id="refundDate" name="refundDate" type="date" required defaultValue={todayISO()} />
-        </div>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="creditAmount">Amount to refund</Label>
-          <Input
-            id="creditAmount"
-            name="amount"
-            type="number"
-            min="0.01"
-            max={selected ? selected.credit.toFixed(2) : undefined}
-            step="0.01"
-            inputMode="decimal"
-            required
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-          />
-        </div>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="creditMethod">Refunded by</Label>
-          <select id="creditMethod" name="method" required defaultValue="" className={selectClass}>
-            <option value="">Choose…</option>
-            {PAYMENT_METHODS.map((m) => (
-              <option key={m.value} value={m.value}>
-                {m.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="creditReference">Reference (optional)</Label>
-          <Input id="creditReference" name="reference" placeholder="Check #, transfer ID…" />
-        </div>
-      </div>
+      </section>
 
-      <div className="flex items-center justify-end gap-3">
-        <Button type="submit" disabled={pending || !contactId} className="rounded-full">
-          {pending ? "Saving…" : "Refund credit"}
-        </Button>
-      </div>
-
-      {state.error ? (
-        <p className="text-sm text-destructive" role="alert">
-          {state.error}
-        </p>
-      ) : null}
+      <FormActions>
+        <div className="mr-auto min-w-0 text-[13px]" aria-live="polite">
+          {state.error && (
+            <p role="alert" className="flex items-start gap-1.5 text-destructive">
+              <Icons.alert className="mt-px size-4 shrink-0" />
+              <span>{state.error}</span>
+            </p>
+          )}
+        </div>
+        <CancelButton href="/sales" dirty={dirty} />
+        <SubmitButton pending={pending} pendingLabel="Saving…" disabled={!contactId}>
+          Refund credit
+        </SubmitButton>
+      </FormActions>
     </form>
   );
 }
@@ -124,14 +147,15 @@ export function RefundModeSwitch({
   return (
     <div className="flex flex-col gap-5">
       <fieldset>
-        <legend className="text-sm font-medium text-foreground">What are you refunding?</legend>
+        <legend className="text-[13px] font-medium text-foreground">What are you refunding?</legend>
         <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
           {options.map((o) => (
             <label
               key={o.value}
-              className={`flex cursor-pointer gap-3 rounded-xl border px-3.5 py-3 transition-colors duration-150 ${
-                mode === o.value ? "border-primary bg-primary/5" : "border-border hover:bg-muted/60"
-              }`}
+              className={cn(
+                "flex cursor-pointer gap-3 rounded-xl border bg-card px-3.5 py-3 shadow-soft-sm transition-colors duration-150 has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-ring/40",
+                mode === o.value ? "border-primary bg-primary/5" : "border-border hover:bg-muted/60",
+              )}
             >
               <input
                 type="radio"

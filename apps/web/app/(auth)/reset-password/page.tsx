@@ -1,47 +1,20 @@
-"use client";
-
 import Link from "next/link";
-import { useActionState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { requestPasswordReset, type AuthActionState } from "@/lib/actions/auth";
+import type { Metadata } from "next";
+import { AuthHeading } from "@/components/auth/auth-shell";
+import { ResetRequestForm } from "@/components/auth/reset-request-form";
+import { Icons } from "@/components/icons";
 
-const initialState: AuthActionState = { error: null };
+export const metadata: Metadata = { title: "Reset your password" };
 
 export default function ResetPasswordPage() {
-  const [state, formAction, pending] = useActionState(
-    requestPasswordReset,
-    initialState,
-  );
-
   return (
-    <Card className="shadow-soft">
-      <CardHeader>
-        <CardTitle>Reset your password</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <form action={formAction} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" name="email" type="email" required autoComplete="email" />
-          </div>
-          {state.error ? (
-            <p className="text-sm text-destructive" role="alert">
-              {state.error}
-            </p>
-          ) : null}
-          <Button type="submit" disabled={pending} className="w-full">
-            {pending ? "Sending…" : "Send reset link"}
-          </Button>
-        </form>
-        <div className="mt-4 text-sm text-muted-foreground">
-          <Link href="/login" className="hover:underline">
-            Back to login
-          </Link>
-        </div>
-      </CardContent>
-    </Card>
+    <>
+      <AuthHeading title="Reset your password" description="Enter the email you log in with and we'll send you a link to set a new password." />
+      <ResetRequestForm />
+      <Link href="/login" className="mt-8 flex items-center justify-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground">
+        <Icons.arrowRight className="size-4 rotate-180" />
+        Back to log in
+      </Link>
+    </>
   );
 }

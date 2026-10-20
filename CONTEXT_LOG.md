@@ -448,3 +448,24 @@ These tests used `tenants`/`accounts`/`journal_entries` directly (not `auth.user
 **Verified:** stray code on `/` → callback → failed exchange → login page with the explanation (browser test); a reset request now reaches Supabase with the request's own origin as `redirect_to` (edge log); `tsc` + `next build` clean. Supabase's GoTrue accepts any redirect on the Site URL's host, so production needs no allow-list change; add `http://localhost:3000/**` to Auth → URL Configuration → Redirect URLs if email links should also work in local dev.
 
 **Not done:** stuck accounts weren't modified — unconfirmed users can sign up again (Supabase re-sends confirmation) or use "Forgot password?", and anyone can reset their password now. Opening an email link in a different browser than the one that started the flow still fails (PKCE); switching the email templates to `token_hash` links (`/auth/callback?token_hash={{ .TokenHash }}&type=…`, already handled by the callback) would remove that limitation.
+
+### UI/UX Overhaul, Projects + FIFO Inventory, Settings/Team, Security Fix (2026-10-08)
+
+**Design system:** folk.app-style type (Inter body with opsz, Inter Tight headings, Instrument Serif italic accents, Geist Mono). Royal-blue primary on cool-gray neutrals, 0.625rem radius, flat bordered cards. App shell rebuilt: grouped sidebar (Money / Operations / Insights / Ledger / Workspace), workspace switcher, account menu (profile, settings, team, theme, log out), mobile drawer, breadcrumb header, ⌘K command menu (`components/command-menu.tsx`), Owner/CPA toggle. Navigation model lives in `lib/navigation.ts`; icons in `components/icons.tsx`; form primitives in `components/ui/field.tsx` (Field, Select, Textarea, FormSection, FormMessage, SubmitButton, FormActions). Module tab row, plan/usage card and Forecasting placeholder removed. Logo = the isometric blue wallet (`public/brand/vitacount-mark.png`, favicon/icon/apple-icon regenerated).
+
+**Auth:** split-screen `AuthShell` for login/signup/reset/invite; friendly Supabase error messages, `?next=` honoured (same-site paths only), password show/hide + strength meter, confirm-password on resets.
+
+**Dashboard:** quick actions, KPI cards with sparklines, real 30-day cash forecast (`getCashForecast`: ledger Cash + open invoices − open bills by due date), real alerts (overdue invoices, spending spikes ≥30%/$250 vs prior period, low stock, matches to review, projected negative cash), real project profitability.
+
+**Migration `20261008120000_workspace_profile_projects_inventory.sql` — WRITTEN AND TESTED, NOT YET APPLIED to the live project (user will apply it):**
+- tenants: legal name, EIN, contact, address, fiscal year, timezone, default terms, invoice notes/footer; `update_workspace_profile` (owner/admin).
+- `projects` + FKs from invoices/bills/expenses, `project_financials` view, `set_document_project`.
+- `items`, `inventory_layers`, `inventory_movements`, `item_stock` view, `adjust_inventory`. FIFO COGS posts on invoice issue / sales receipt; refunds restock at last cost; supplier credits consume FIFO with a COGS true-up. Inventory GL always equals layer value (cost_remaining tracked in cents).
+- `create_sales_document`, `create_bill_received`, `create_vendor_credit`, `post_expense_created` gained trailing DEFAULT NULL params (old callers unaffected); bills now recompute amounts server-side and validate vendor/account/item tenancy.
+- SECURITY: dropped `memberships_update_self_accept` (any member could set their own role to owner via REST) and added `memberships_guard_roles` trigger (only owners grant/revoke owner, last owner protected).
+- Verified in PGlite: 40 checks (FIFO math, GL = layers, oversell refused + rolled back, project roll-up, tenant isolation, escalation blocked).
+- Until applied, Projects/Inventory/Workspace settings show `<SchemaNotice>`; transaction forms hide item/project pickers (`isMissingSchema` in `lib/db-errors.ts`).
+
+**New pages:** /projects (+new, [id], [id]/edit), /inventory (+new, [id], [id]/edit), /settings/{workspace,invoicing,profile,security}, /team (/settings/team redirects), /contacts/new. All transaction forms rebuilt (item picker, project select, inline field errors, dirty-form guard, journal balance indicator).
+
+**Open items:** apply the migration and regenerate `database.types.ts`; viewer role is not read-only at the RLS level; pre-existing lint `any`s in agents/banking/reports/etc.; `create_sales_document` has no notes column (workspace invoice notes appear on print only).

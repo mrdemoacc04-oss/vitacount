@@ -1,60 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useId, useRef, useState } from "react";
-
-type MenuItem = { label: string; description: string; href: string };
-type MenuSection = { title: string; viewAll: { label: string; href: string }; items: MenuItem[] };
-
-// Customers and suppliers mirror each other: bill later / paid now / money moves / adjustments.
-const sections: MenuSection[] = [
-  {
-    title: "Customers",
-    viewAll: { label: "All sales", href: "/sales" },
-    items: [
-      { label: "Invoice", description: "Bill a customer, get paid later", href: "/sales/new?type=invoice" },
-      { label: "Sales receipt", description: "A sale paid on the spot", href: "/sales/new?type=sales_receipt" },
-      { label: "Payment received", description: "Money in — split across invoices", href: "/sales/receive-payment" },
-      { label: "Refund", description: "Give money back to a customer", href: "/sales/new?type=refund_receipt" },
-      { label: "Debit note", description: "Add a charge to what they owe", href: "/sales/new?type=debit_note" },
-    ],
-  },
-  {
-    title: "Suppliers",
-    viewAll: { label: "All expenses", href: "/expenses" },
-    items: [
-      { label: "Bill", description: "A supplier invoice to pay later", href: "/expenses/new?type=bill" },
-      { label: "Expense", description: "Something already paid for", href: "/expenses/new?type=expense" },
-      { label: "Payment made", description: "Pay one or more bills at once", href: "/expenses/pay-bills" },
-      { label: "Supplier credit", description: "A credit or debit note from a supplier", href: "/expenses/new?type=vendor_credit" },
-    ],
-  },
-];
+import { useCallback, useId, useRef, useState } from "react";
+import { CREATE_SECTIONS } from "@/lib/navigation";
+import { useDismiss } from "@/lib/use-dismiss";
+import { Icons } from "@/components/icons";
 
 export function NewMenu() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const panelId = useId();
-
-  useEffect(() => {
-    if (!open) return;
-    function onClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        setOpen(false);
-        buttonRef.current?.focus();
-      }
-    }
-    document.addEventListener("mousedown", onClick);
-    document.addEventListener("keydown", onKey);
-    return () => {
-      document.removeEventListener("mousedown", onClick);
-      document.removeEventListener("keydown", onKey);
-    };
-  }, [open]);
+  const close = useCallback(() => {
+    setOpen(false);
+    buttonRef.current?.focus();
+  }, []);
+  useDismiss(ref, open, close);
 
   return (
     <div ref={ref} className="relative">
@@ -64,62 +25,67 @@ export function NewMenu() {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-controls={panelId}
-        className="flex cursor-pointer items-center gap-1.5 rounded-full bg-foreground px-3.5 py-1.5 text-xs font-semibold text-background transition-transform duration-200 active:scale-[0.97] hover:opacity-90"
+        className="flex h-8 items-center gap-1.5 rounded-lg bg-primary pl-2.5 pr-2 text-[13px] font-medium text-primary-foreground shadow-soft-sm transition-[transform,opacity] duration-150 hover:opacity-90 active:scale-[0.97]"
       >
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-3.5" aria-hidden="true">
-          <path strokeLinecap="round" d="M12 5v14M5 12h14" />
-        </svg>
+        <Icons.plus className="size-4" strokeWidth={1.75} />
         New
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="size-3" aria-hidden="true">
-          <path strokeLinecap="round" strokeLinejoin="round" d="m6 9 6 6 6-6" />
-        </svg>
+        <Icons.chevronDown className={`size-3.5 opacity-70 transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
       </button>
 
       {open && (
         <div
           id={panelId}
-          className="absolute right-0 top-full z-40 mt-2 w-[min(34rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-border bg-card shadow-soft"
+          className="animate-pop-in absolute right-0 top-full z-40 mt-2 w-[min(36rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-border bg-popover shadow-soft"
         >
-          <div className="grid grid-cols-1 gap-px bg-border/60 sm:grid-cols-2">
-            {sections.map((section) => (
-              <nav key={section.title} aria-label={`New ${section.title.toLowerCase()} transaction`} className="bg-card p-2">
-                <div className="flex items-baseline justify-between px-2.5 pb-1.5 pt-1">
-                  <h3 className="text-[10.5px] font-semibold uppercase tracking-wider text-muted-foreground">{section.title}</h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 sm:divide-x sm:divide-border">
+            {CREATE_SECTIONS.map((section) => (
+              <nav key={section.title} aria-label={`New ${section.title.toLowerCase()} transaction`} className="p-1.5">
+                <div className="flex items-baseline justify-between px-2.5 pb-1 pt-1.5">
+                  <h3 className="font-sans text-[11.5px] font-medium text-muted-foreground">{section.title}</h3>
                   <Link
                     href={section.viewAll.href}
                     onClick={() => setOpen(false)}
-                    className="text-[10.5px] font-medium text-primary hover:underline"
+                    className="text-[11.5px] text-muted-foreground underline-offset-2 transition-colors hover:text-foreground hover:underline"
                   >
-                    {section.viewAll.label} →
+                    {section.viewAll.label}
                   </Link>
                 </div>
                 <ul>
-                  {section.items.map((item) => (
-                    <li key={item.label}>
-                      <Link
-                        href={item.href}
-                        onClick={() => setOpen(false)}
-                        className="block rounded-xl px-2.5 py-2 transition-colors duration-150 hover:bg-muted focus-visible:bg-muted focus-visible:outline-none"
-                      >
-                        <span className="block text-xs font-semibold text-foreground">{item.label}</span>
-                        <span className="block text-[11px] leading-snug text-muted-foreground">{item.description}</span>
-                      </Link>
-                    </li>
-                  ))}
+                  {section.items.map((item) => {
+                    const ItemIcon = item.icon;
+                    return (
+                      <li key={item.label}>
+                        <Link
+                          href={item.href}
+                          onClick={() => setOpen(false)}
+                          className="group flex items-start gap-3 rounded-xl px-2.5 py-2 transition-colors duration-150 hover:bg-accent focus-visible:bg-accent focus-visible:outline-none"
+                        >
+                          <span className="mt-px flex size-7 shrink-0 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition-colors group-hover:border-primary/30 group-hover:text-primary">
+                            <ItemIcon className="size-4" />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-[13px] font-medium text-foreground">{item.label}</span>
+                            <span className="block text-xs leading-snug text-muted-foreground">{item.description}</span>
+                          </span>
+                        </Link>
+                      </li>
+                    );
+                  })}
                 </ul>
               </nav>
             ))}
           </div>
-          <div className="flex items-center justify-between border-t border-border/70 bg-muted/30 px-4 py-2">
-            <span className="text-[11px] text-muted-foreground">Someone new?</span>
-            <Link
-              href="/contacts"
-              onClick={() => setOpen(false)}
-              className="text-[11px] font-semibold text-foreground hover:text-primary"
-            >
-              + Add a customer or supplier
-            </Link>
-          </div>
+          <Link
+            href="/contacts/new"
+            onClick={() => setOpen(false)}
+            className="flex items-center justify-between border-t border-border bg-muted/40 px-4 py-2.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <span className="flex items-center gap-2">
+              <Icons.userPlus className="size-4" />
+              Add a customer or supplier
+            </span>
+            <Icons.arrowRight className="size-3.5" />
+          </Link>
         </div>
       )}
     </div>

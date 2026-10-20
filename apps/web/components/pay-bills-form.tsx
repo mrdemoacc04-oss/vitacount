@@ -1,13 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { Icons } from "@/components/icons";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Field, FormActions, Select, SubmitButton, secondaryButtonClass } from "@/components/ui/field";
+import { CancelButton } from "@/components/forms/cancel-button";
+import { MoneyInput } from "@/components/forms/money-input";
+import { useActionForm, useUnsavedChangesWarning, type FieldErrors } from "@/components/forms/use-action-form";
 import { applyVendorCreditsAction, payBillsAction, type PayBillsState } from "@/lib/actions/bills";
-import { formatDate, todayISO } from "@/lib/dates";
+import { formatDate, isISODate, todayISO } from "@/lib/dates";
 import { PAYMENT_METHODS } from "@/lib/documents";
 import { formatMoney, normalizeAmount, toScaled } from "@/lib/money";
 
@@ -24,7 +27,6 @@ export type OpenBill = {
 export type PayableVendor = { id: string; name: string; openBalance: number; credit: number };
 
 const initialState: PayBillsState = { error: null };
-const selectClass = "h-9 w-full rounded-lg border border-border bg-background px-3 text-sm";
 const cents = (text: string) => toScaled(text, 2) ?? BigInt(0);
 
 export function PayBillsForm({
@@ -41,7 +43,6 @@ export function PayBillsForm({
   focusBillId?: string;
 }) {
   const router = useRouter();
-  const [state, formAction, pending] = useActionState(payBillsAction.bind(null, tenantId), initialState);
   const [crediting, startCrediting] = useTransition();
   const [creditMessage, setCreditMessage] = useState<string | null>(null);
 
@@ -95,59 +96,74 @@ export function PayBillsForm({
     : rowErrors.size > 0
       ? "A payment is more than that bill's open balance."
       : vendorId && totalCents === BigInt(0)
-        ? "Tick the bills you're paying."
+        ? "Select the bills you're paying."
         : null;
-  // Empty required fields (supplier, method) are left to the browser's own validation.
-  const canSubmit = problem === null && !pending;
+
+  function validate(): FieldErrors {
+    const found: FieldErrors = {};
+    if (!vendorId) found.vendorId = "Choose the supplier you're paying.";
+    if (!isISODate(paymentDate)) found.paymentDate = "Pick the payment date.";
+    if (!method) found.method = "Choose how you paid.";
+    return found;
+  }
+
+  const { state, pending, errors, dirty, formProps } = useActionForm(payBillsAction.bind(null, tenantId), initialState, validate);
+  useUnsavedChangesWarning(dirty && !pending);
 
   return (
-    <form action={formAction} className="flex flex-col gap-5">
+    <form {...formProps} className="flex flex-col gap-6">
       <input type="hidden" name="applications" value={applicationsJson} />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
-        <div className="flex flex-col gap-2 sm:col-span-2">
-          <Label htmlFor="vendorId">Supplier</Label>
-          <select
-            id="vendorId"
-            name="vendorId"
-            required
-            value={vendorId}
-            onChange={(e) => {
-              setVendorId(e.target.value);
-              setAllocations({});
-              setCreditMessage(null);
-            }}
-            className={selectClass}
-          >
-            <option value="">Who are you paying?</option>
-            {vendors.map((v) => (
-              <option key={v.id} value={v.id}>
-                {v.name}
-                {v.openBalance > 0 ? ` — ${formatMoney(v.openBalance)} owed` : ""}
-              </option>
-            ))}
-          </select>
+      <section className="rounded-xl border border-border bg-card p-5 shadow-soft-sm md:p-6" aria-label="Payment details">
+        <div className="grid grid-cols-1 gap-x-4 gap-y-5 md:grid-cols-6">
+          <Field label="Supplier" htmlFor="vendorId" required error={errors.vendorId} className="md:col-span-3">
+            <Select
+              id="vendorId"
+              name="vendorId"
+              value={vendorId}
+              onChange={(e) => {
+                setVendorId(e.target.value);
+                setAllocations({});
+                setCreditMessage(null);
+              }}
+              aria-invalid={errors.vendorId ? true : undefined}
+              autoFocus={!vendorId}
+            >
+              <option value="">Who are you paying?</option>
+              {vendors.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.name}
+                  {v.openBalance > 0 ? ` — ${formatMoney(v.openBalance)} owed` : ""}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Payment date" htmlFor="paymentDate" required error={errors.paymentDate} className="md:col-span-3">
+            <Input
+              id="paymentDate"
+              name="paymentDate"
+              type="date"
+              value={paymentDate}
+              onChange={(e) => setPaymentDate(e.target.value)}
+              aria-invalid={errors.paymentDate ? true : undefined}
+              className="h-9"
+            />
+          </Field>
+          <Field label="Paid by" htmlFor="method" required error={errors.method} className="md:col-span-3">
+            <Select id="method" name="method" value={method} onChange={(e) => setMethod(e.target.value)} aria-invalid={errors.method ? true : undefined}>
+              <option value="">Choose a method</option>
+              {PAYMENT_METHODS.map((m) => (
+                <option key={m.value} value={m.value}>
+                  {m.label}
+                </option>
+              ))}
+            </Select>
+          </Field>
+          <Field label="Reference" htmlFor="reference" optional hint="Check number or transfer ID." className="md:col-span-3">
+            <Input id="reference" name="reference" placeholder="e.g. 2051" value={reference} onChange={(e) => setReference(e.target.value)} className="h-9" />
+          </Field>
         </div>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="paymentDate">Payment date</Label>
-          <Input id="paymentDate" name="paymentDate" type="date" required value={paymentDate} onChange={(e) => setPaymentDate(e.target.value)} />
-        </div>
-        <div className="flex flex-col gap-2">
-          <Label htmlFor="method">Paid by</Label>
-          <select id="method" name="method" required value={method} onChange={(e) => setMethod(e.target.value)} className={selectClass}>
-            <option value="">Choose…</option>
-            {PAYMENT_METHODS.map((m) => (
-              <option key={m.value} value={m.value}>
-                {m.label}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="flex flex-col gap-2 sm:col-span-2">
-          <Label htmlFor="reference">Reference (optional)</Label>
-          <Input id="reference" name="reference" placeholder="Check #, transfer ID…" value={reference} onChange={(e) => setReference(e.target.value)} />
-        </div>
-      </div>
+      </section>
 
       {vendor && vendor.credit > 0 && (
         <div className="flex flex-wrap items-center gap-3 rounded-xl bg-chart-2/10 px-4 py-3 text-sm">
@@ -156,16 +172,16 @@ export function PayBillsForm({
             <span className="font-semibold">{vendor.name}</span>.
           </p>
           {bills.length > 0 && (
-            <Button type="button" variant="outline" className="rounded-full" disabled={crediting} onClick={applyCredits}>
+            <button type="button" className={`${secondaryButtonClass} cursor-pointer disabled:opacity-60`} disabled={crediting} onClick={applyCredits}>
               {crediting ? "Applying…" : "Apply credit to open bills"}
-            </Button>
+            </button>
           )}
           {creditMessage && <p className="w-full text-xs text-muted-foreground">{creditMessage}</p>}
         </div>
       )}
 
       {vendorId && (
-        <div className="rounded-xl border border-border/70">
+        <div className="rounded-xl border border-border bg-card shadow-soft-sm">
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/70 px-4 py-2.5">
             <p className="text-sm font-medium text-foreground">Open bills</p>
             {bills.length > 0 && (
@@ -231,17 +247,11 @@ export function PayBillsForm({
                         </td>
                         <td className="py-2 pr-4 text-right tabular-nums">{formatMoney(b.balanceDue)}</td>
                         <td className="py-2 pr-4">
-                          <Input
-                            type="number"
-                            min="0"
-                            step="0.01"
-                            inputMode="decimal"
+                          <MoneyInput
                             aria-label={`Payment for ${b.number ?? "bill"}`}
-                            aria-invalid={rowErrors.has(b.id) || undefined}
-                            placeholder="0.00"
+                            invalid={rowErrors.has(b.id)}
                             value={value}
-                            onChange={(e) => setAllocation(b.id, e.target.value)}
-                            className="text-right tabular-nums"
+                            onValueChange={(v) => setAllocation(b.id, v)}
                           />
                         </td>
                       </tr>
@@ -254,25 +264,24 @@ export function PayBillsForm({
         </div>
       )}
 
-      <div className="flex flex-wrap items-center justify-end gap-3">
-        {problem && (
-          <p className="mr-auto text-sm text-destructive" role="alert">
-            {problem}
-          </p>
-        )}
-        <p className="text-sm text-muted-foreground">
-          Payment total <span className="font-heading text-base font-semibold text-foreground tabular-nums">{formatMoney(Number(totalCents) / 100)}</span>
+      <FormActions>
+        <div className="mr-auto min-w-0 text-[13px]" aria-live="polite">
+          {state.error || problem ? (
+            <p role="alert" className="flex items-start gap-1.5 text-destructive">
+              <Icons.alert className="mt-px size-4 shrink-0" />
+              <span>{state.error ?? problem}</span>
+            </p>
+          ) : null}
+        </div>
+        <p className="text-[13px] text-muted-foreground">
+          Payment total{" "}
+          <span className="font-heading text-base font-semibold tabular-nums text-foreground">{formatMoney(Number(totalCents) / 100)}</span>
         </p>
-        <Button type="submit" disabled={!canSubmit} className="rounded-full">
-          {pending ? "Recording…" : "Record payment"}
-        </Button>
-      </div>
-
-      {state.error ? (
-        <p className="text-sm text-destructive" role="alert">
-          {state.error}
-        </p>
-      ) : null}
+        <CancelButton href="/expenses" dirty={dirty} />
+        <SubmitButton pending={pending} pendingLabel="Recording…" disabled={problem !== null}>
+          Record payment
+        </SubmitButton>
+      </FormActions>
     </form>
   );
 }

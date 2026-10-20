@@ -719,6 +719,99 @@ export type Database = {
           },
         ]
       }
+      inventory_layers: {
+        Row: {
+          cost_remaining: number
+          created_at: string
+          id: string
+          item_id: string
+          quantity_received: number
+          quantity_remaining: number
+          received_date: string
+          source_id: string | null
+          source_type: string
+          tenant_id: string
+          unit_cost: number
+        }
+        Insert: {
+          cost_remaining: number
+          created_at?: string
+          id?: string
+          item_id: string
+          quantity_received: number
+          quantity_remaining: number
+          received_date: string
+          source_id?: string | null
+          source_type: string
+          tenant_id: string
+          unit_cost: number
+        }
+        Update: {
+          cost_remaining?: number
+          created_at?: string
+          id?: string
+          item_id?: string
+          quantity_received?: number
+          quantity_remaining?: number
+          received_date?: string
+          source_id?: string | null
+          source_type?: string
+          tenant_id?: string
+          unit_cost?: number
+        }
+        Relationships: []
+      }
+      inventory_movements: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          item_id: string
+          journal_entry_id: string | null
+          layer_id: string | null
+          memo: string | null
+          movement_date: string
+          movement_type: string
+          quantity: number
+          source_id: string | null
+          source_type: string
+          tenant_id: string
+          total_cost: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          item_id: string
+          journal_entry_id?: string | null
+          layer_id?: string | null
+          memo?: string | null
+          movement_date: string
+          movement_type: string
+          quantity: number
+          source_id?: string | null
+          source_type: string
+          tenant_id: string
+          total_cost: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          item_id?: string
+          journal_entry_id?: string | null
+          layer_id?: string | null
+          memo?: string | null
+          movement_date?: string
+          movement_type?: string
+          quantity?: number
+          source_id?: string | null
+          source_type?: string
+          tenant_id?: string
+          total_cost?: number
+        }
+        Relationships: []
+      }
       invoice_lines: {
         Row: {
           amount: number
@@ -843,6 +936,69 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      items: {
+        Row: {
+          asset_account_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          expense_account_id: string | null
+          id: string
+          income_account_id: string | null
+          is_active: boolean
+          name: string
+          purchase_cost: number | null
+          reorder_point: number | null
+          reorder_qty: number | null
+          sales_price: number | null
+          sku: string | null
+          tenant_id: string
+          type: string
+          unit: string | null
+          updated_at: string
+        }
+        Insert: {
+          asset_account_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expense_account_id?: string | null
+          id?: string
+          income_account_id?: string | null
+          is_active?: boolean
+          name: string
+          purchase_cost?: number | null
+          reorder_point?: number | null
+          reorder_qty?: number | null
+          sales_price?: number | null
+          sku?: string | null
+          tenant_id: string
+          type: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Update: {
+          asset_account_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          expense_account_id?: string | null
+          id?: string
+          income_account_id?: string | null
+          is_active?: boolean
+          name?: string
+          purchase_cost?: number | null
+          reorder_point?: number | null
+          reorder_qty?: number | null
+          sales_price?: number | null
+          sku?: string | null
+          tenant_id?: string
+          type?: string
+          unit?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       journal_entries: {
         Row: {
@@ -1203,6 +1359,54 @@ export type Database = {
           },
         ]
       }
+      projects: {
+        Row: {
+          budget: number | null
+          code: string | null
+          created_at: string
+          created_by: string | null
+          customer_id: string | null
+          description: string | null
+          end_date: string | null
+          id: string
+          name: string
+          start_date: string | null
+          status: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          budget?: number | null
+          code?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          name: string
+          start_date?: string | null
+          status?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          budget?: number | null
+          code?: string | null
+          created_at?: string
+          created_by?: string | null
+          customer_id?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string
+          name?: string
+          start_date?: string | null
+          status?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -1293,6 +1497,17 @@ export type Database = {
           name: string
           plan_tier: string
           settings: Json
+          address: Json
+          default_payment_terms: string
+          email: string | null
+          fiscal_year_start_month: number
+          invoice_footer: string | null
+          invoice_notes: string | null
+          legal_name: string | null
+          phone: string | null
+          tax_id: string | null
+          timezone: string
+          website: string | null
         }
         Insert: {
           base_currency?: string
@@ -1302,6 +1517,17 @@ export type Database = {
           name: string
           plan_tier?: string
           settings?: Json
+          address?: Json
+          default_payment_terms?: string
+          email?: string | null
+          fiscal_year_start_month?: number
+          invoice_footer?: string | null
+          invoice_notes?: string | null
+          legal_name?: string | null
+          phone?: string | null
+          tax_id?: string | null
+          timezone?: string
+          website?: string | null
         }
         Update: {
           base_currency?: string
@@ -1311,6 +1537,17 @@ export type Database = {
           name?: string
           plan_tier?: string
           settings?: Json
+          address?: Json
+          default_payment_terms?: string
+          email?: string | null
+          fiscal_year_start_month?: number
+          invoice_footer?: string | null
+          invoice_notes?: string | null
+          legal_name?: string | null
+          phone?: string | null
+          tax_id?: string | null
+          timezone?: string
+          website?: string | null
         }
         Relationships: []
       }
@@ -1464,6 +1701,26 @@ export type Database = {
       }
     }
     Views: {
+      item_stock: {
+        Row: {
+          item_id: string | null
+          quantity_on_hand: number | null
+          stock_value: number | null
+          tenant_id: string | null
+        }
+        Relationships: []
+      }
+      project_financials: {
+        Row: {
+          costs: number | null
+          profit: number | null
+          project_id: string | null
+          receivable: number | null
+          revenue: number | null
+          tenant_id: string | null
+        }
+        Relationships: []
+      }
       unified_transactions_feed: {
         Row: {
           amount: number | null
@@ -1490,6 +1747,18 @@ export type Database = {
         Returns: undefined
       }
       accept_invite: { Args: { p_tenant_id: string }; Returns: undefined }
+      adjust_inventory: {
+        Args: {
+          p_date: string
+          p_item_id: string
+          p_kind?: string
+          p_quantity: number
+          p_reason: string
+          p_tenant_id: string
+          p_unit_cost: number
+        }
+        Returns: string
+      }
       apply_customer_credit: {
         Args: { p_contact_id: string; p_tenant_id: string }
         Returns: number
@@ -1504,6 +1773,7 @@ export type Database = {
           p_due_date: string
           p_issue_date: string
           p_lines: Json
+          p_project_id?: string
           p_tenant_id: string
           p_vendor_id: string
         }
@@ -1518,6 +1788,7 @@ export type Database = {
           p_lines: Json
           p_payment_method: string
           p_payment_reference: string
+          p_project_id?: string
           p_tenant_id: string
         }
         Returns: string
@@ -1528,6 +1799,7 @@ export type Database = {
           p_credit_number: string
           p_issue_date: string
           p_lines: Json
+          p_project_id?: string
           p_tenant_id: string
           p_vendor_id: string
         }
@@ -1568,6 +1840,7 @@ export type Database = {
           p_expense_date: string
           p_memo: string
           p_payment_method: string
+          p_project_id?: string
           p_tenant_id: string
         }
         Returns: string
@@ -1620,6 +1893,34 @@ export type Database = {
       }
       seed_default_chart_of_accounts: {
         Args: { p_tenant_id: string }
+        Returns: undefined
+      }
+      set_document_project: {
+        Args: {
+          p_document_id: string
+          p_document_kind: string
+          p_project_id: string
+          p_tenant_id: string
+        }
+        Returns: undefined
+      }
+      update_workspace_profile: {
+        Args: {
+          p_address: Json
+          p_default_payment_terms: string
+          p_default_tax_rate: number
+          p_email: string
+          p_fiscal_year_start_month: number
+          p_invoice_footer: string
+          p_invoice_notes: string
+          p_legal_name: string
+          p_name: string
+          p_phone: string
+          p_tax_id: string
+          p_tenant_id: string
+          p_timezone: string
+          p_website: string
+        }
         Returns: undefined
       }
       set_agent_autonomy_level: {
