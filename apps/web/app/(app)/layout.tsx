@@ -35,10 +35,11 @@ export default async function AppLayout({
 
   return (
     <TenantProvider value={{ memberships, activeTenantId, activeTenant, role }}>
-      <AppShell fullName={profile?.full_name ?? null} email={user.email ?? null}>
-        {children}
-      </AppShell>
-      <AgentChat />
+      <AgentChat>
+        <AppShell fullName={profile?.full_name ?? null} email={user.email ?? null}>
+          {children}
+        </AppShell>
+      </AgentChat>
       <AgentCursor />
     </TenantProvider>
   );

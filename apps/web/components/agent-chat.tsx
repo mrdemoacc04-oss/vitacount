@@ -20,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { Mascot } from "@/components/mascot";
+import { AgentPromptContext } from "@/components/agent-prompt-bar";
 import { preloadVoice, primeVoiceLevel, speak, stopSpeaking, useSpeechInput, useSpeechOutputStatus, useVoiceEngine } from "@/lib/agent/use-voice";
 import { useVitaAgent, type LogItem } from "@/lib/agent/use-vita-agent";
 
@@ -85,7 +86,7 @@ function clampFabPos(top: number, left: number): FabPos {
 const iconButton =
   "flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-foreground/[0.07] hover:text-foreground";
 
-export function AgentChat() {
+export function AgentChat({ children }: { children?: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showGreeting, setShowGreeting] = useState(false);
@@ -359,7 +360,18 @@ export function AgentChat() {
           : "Tell me what to do — “record a $45 expense”, “open invoices”…";
 
   return (
-    <>
+    <AgentPromptContext.Provider value={{
+      busy: agent.busy,
+      send: (text) => {
+        if (agent.busy || !text.trim()) return false;
+        openVita();
+        setShowHistory(false);
+        submit(text);
+        setPanelPinned(true);
+        return true;
+      },
+    }}>
+      {children}
       {/* Launcher */}
       <button
         ref={fabRef}
@@ -672,7 +684,7 @@ export function AgentChat() {
           )}
         </div>
       )}
-    </>
+    </AgentPromptContext.Provider>
   );
 }
 

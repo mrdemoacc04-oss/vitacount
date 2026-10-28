@@ -6,6 +6,7 @@ import { useId, useTransition } from "react";
 import { BezelCard } from "@/components/bezel-card";
 import { Icons, type Icon } from "@/components/icons";
 import { DashboardRangeFilter } from "@/components/dashboard-range-filter";
+import { AgentPromptBar } from "@/components/agent-prompt-bar";
 import { IncomeExpenseChart } from "@/components/income-expense-chart";
 import type { DashboardRange } from "@/lib/date-range";
 import type { ForecastPoint, SeriesPoint } from "@/lib/dashboard-queries";
@@ -405,6 +406,8 @@ export function DashboardClient({
 
         <DashboardRangeFilter range={range} pending={pending} onChange={updateParams} />
       </div>
+
+      <AgentPromptBar />
 
       {/* Quick actions — the five things people open the app to do */}
       <nav aria-label="Quick actions" className="scrollbar-none -mx-4 flex gap-2 overflow-x-auto px-4 md:mx-0 md:flex-wrap md:px-0">
